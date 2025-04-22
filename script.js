@@ -7,6 +7,8 @@ document.addEventListener('DOMContentLoaded', function() {
     let activeFilterLabels = [];
     // [ADDED CODE] Track if the journey is locked or not
     let isJourneyLocked = false; // if it's an existing journey, we lock by default
+    // Store a snapshot of the journey when it is unlocked so we can compare later
+    let journeyOriginalSnapshot = null;
 
     // Default phases
     const defaultPhases = ["Scope", "Sent", "Response", "Review", "Job Walk", "Awarded", "Construction", "Closeout"];
@@ -314,6 +316,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const personModal = document.getElementById('person-modal');
     const contractModal = document.getElementById('contract-modal');
     const fileboxModal = document.getElementById('filebox-modal');
+
+    // Confirm Lock modal
+    const confirmLockModal = document.getElementById('confirm-lock-modal');
+    const confirmLockModalBody = document.getElementById('confirm-lock-modal-body');
+    const confirmLockBtn = document.getElementById('confirm-lock-btn');
 
     // Utility Functions
     const showView = (viewId) => {
@@ -667,21 +674,101 @@ document.addEventListener('DOMContentLoaded', function() {
         renderJourneyDetailFileBox();
     }
 
-    // [ADDED CODE] Lock/unlock toggling
+    // Utility: create a short string representation of a value
+    const previewVal = (val) => {
+        if (val === null || val === undefined) return '—';
+        let str;
+        if (typeof val === 'object') {
+            try {
+                str = JSON.stringify(val);
+            } catch {
+                str = String(val);
+            }
+        } else {
+            str = String(val);
+        }
+        if (str.length > 80) str = str.slice(0, 77) + '…';
+        return str;
+    };
+
+    // Compute simple diff between two objects (shallow compare of top‑level props)
+    const getJourneyChanges = (before, after) => {
+        if (!before) return [];
+        const keys = new Set([...Object.keys(before), ...Object.keys(after)]);
+        const changes = [];
+        keys.forEach(k => {
+            const prev = before[k];
+            const curr = after[k];
+            // Use JSON.stringify for comparison (safest for deep collections)
+            let same;
+            try {
+                same = JSON.stringify(prev) === JSON.stringify(curr);
+            } catch {
+                same = prev === curr;
+            }
+            if (!same) {
+                changes.push({ field: k, before: previewVal(prev), after: previewVal(curr) });
+            }
+        });
+        return changes;
+    };
+
+    function showConfirmLockModal(changes) {
+        confirmLockModalBody.innerHTML = '';
+        if (!changes || changes.length === 0) {
+            const p = document.createElement('p');
+            p.textContent = 'No changes detected since unlocking. Lock anyway?';
+            confirmLockModalBody.appendChild(p);
+        } else {
+            const intro = document.createElement('p');
+            intro.textContent = 'The following changes will be locked in:';
+            confirmLockModalBody.appendChild(intro);
+            const ul = document.createElement('ul');
+            changes.forEach(c => {
+                const li = document.createElement('li');
+                li.innerHTML = `<strong>${c.field}:</strong> <em>${c.before}</em> &rarr; <em>${c.after}</em>`;
+                ul.appendChild(li);
+            });
+            confirmLockModalBody.appendChild(ul);
+        }
+        // Show modal
+        showModal(confirmLockModal);
+    }
+
+    // Finalize the lock operation after user confirms
+    function finalizeLockAndSave() {
+        hideModal(confirmLockModal);
+        // Save changes and lock
+        handleSaveChanges();
+        isJourneyLocked = true;
+        journeyStateText.textContent = "Journey Locked";
+        journeySaveButton.innerHTML = '<i class="fa-solid fa-lock"></i> Unlock';
+        enableJourneyDetailInputs(false);
+        journeyOriginalSnapshot = null;
+    }
+
+    // Attach once
+    confirmLockBtn.addEventListener('click', finalizeLockAndSave);
+
+    // Lock/unlock toggling with confirmation
     function handleJourneyLockToggle() {
         if (isJourneyLocked) {
-            // Currently locked, so unlock it
+            // Unlock: store snapshot then allow editing
             isJourneyLocked = false;
             journeyStateText.textContent = "Unlocked - Editing";
             journeySaveButton.innerHTML = '<i class="fa-solid fa-lock"></i> Lock In Changes';
             enableJourneyDetailInputs(true);
+            // Deep clone current journey for later diff
+            if (activeJourneyId && db.journeys[activeJourneyId]) {
+                journeyOriginalSnapshot = JSON.parse(JSON.stringify(db.journeys[activeJourneyId]));
+            }
         } else {
-            // Currently unlocked, so lock it (and save)
-            handleSaveChanges(); 
-            isJourneyLocked = true;
-            journeyStateText.textContent = "Journey Locked";
-            journeySaveButton.innerHTML = '<i class="fa-solid fa-lock"></i> Unlock';
-            enableJourneyDetailInputs(false);
+            // Currently unlocked – attempt to lock; show confirmation dialog
+            let changes = [];
+            if (activeJourneyId && db.journeys[activeJourneyId] && journeyOriginalSnapshot) {
+                changes = getJourneyChanges(journeyOriginalSnapshot, db.journeys[activeJourneyId]);
+            }
+            showConfirmLockModal(changes);
         }
     }
 
