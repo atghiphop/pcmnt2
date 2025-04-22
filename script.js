@@ -4,13 +4,15 @@ document.addEventListener('DOMContentLoaded', function() {
     let activeJourneyId = null;
     let isNewJourney = false;
     let currentUser = { name: "Demo User", id: "user0" }; // Simulate logged-in user
-    let activeFilterLabels = []; // Stores currently active filter labels
+    let activeFilterLabels = [];
+    // [ADDED CODE] Track if the journey is locked or not
+    let isJourneyLocked = false; // if it's an existing journey, we lock by default
 
     // Default phases
     const defaultPhases = ["Scope", "Sent", "Response", "Review", "Job Walk", "Awarded", "Construction", "Closeout"];
     const defaultStatuses = ["Preparing", "Reviewing", "Waiting", "Complete"];
 
-    // In-memory data stores (Full Sample Data)
+    // In-memory data stores ...
     let db = {
         journeys: {
             "j1": {
@@ -315,7 +317,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Utility Functions
     const showView = (viewId) => {
-        // Hide all
         Object.values(views).forEach(v => v.classList.add('hidden'));
         if (views[viewId]) {
             views[viewId].classList.remove('hidden');
@@ -378,8 +379,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const updateNav = () => {
         Object.values(navItems).forEach(item => item.classList.remove('active'));
-        // We have nav items: journeys -> journey-overview or journey-detail
-        // So if currentView starts with 'journey', highlight 'journeys'
         if (currentView.startsWith('journey')) {
             navItems['journeys'].classList.add('active');
         } else if (navItems[currentView]) {
@@ -533,7 +532,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- RENDERING FUNCTIONS ---
 
-    // Journey Overview
     function renderJourneyOverview() {
         journeyListTbody.innerHTML = '';
         const journeys = Object.values(db.journeys);
@@ -571,7 +569,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Label Filter
     function getAvailableLabelsForJourney(journeyId) {
         const journey = db.journeys[journeyId];
         if (!journey) return [];
@@ -636,7 +633,6 @@ document.addEventListener('DOMContentLoaded', function() {
         renderNeedsAttention(journey);
     }
 
-    // Journey Detail
     function loadJourneyDetail(journeyId) {
         const journey = db.journeys[journeyId];
         if (!journey) {
@@ -646,20 +642,15 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         activeJourneyId = journeyId;
         isNewJourney = false; // If it existed already, not new
-        headerTitle.textContent = `Journey: ${journey.name}`;
         journeyDetailTitle.textContent = journey.name;
-        if (!journey.lastUpdate) {
-            journeyStateText.textContent = "Creating New Journey";
-            journeySaveButton.innerHTML = '<i class="fa-solid fa-check"></i> Save and Create';
-            journeyStateText.style.color = ""; // default
-        } else {
-            journeyStateText.textContent = "Adding to Journey";
-            journeySaveButton.innerHTML = '<i class="fa-solid fa-lock"></i> Lock In Changes';
-            // Make it red as requested
-            journeyStateText.style.color = "red";
-        }
 
-        journeySaveButton.onclick = handleSaveChanges;
+        // [ADDED CODE] If this is an existing journey, lock it by default:
+        isJourneyLocked = true; 
+        journeyStateText.textContent = "Journey Locked";
+        journeySaveButton.innerHTML = '<i class="fa-solid fa-lock"></i> Unlock';
+        enableJourneyDetailInputs(false);
+        journeySaveButton.onclick = handleJourneyLockToggle;
+
         activeFilterLabels = [];
         const availableLabels = getAvailableLabelsForJourney(journeyId);
         renderAvailableLabels(availableLabels);
@@ -673,8 +664,36 @@ document.addEventListener('DOMContentLoaded', function() {
         applyFiltersAndRerender();
         renderCommentHistory(journey.commentHistory || []);
         renderActivityLog(journey.activityLog || []);
-        // Render bottom file box portion
         renderJourneyDetailFileBox();
+    }
+
+    // [ADDED CODE] Lock/unlock toggling
+    function handleJourneyLockToggle() {
+        if (isJourneyLocked) {
+            // Currently locked, so unlock it
+            isJourneyLocked = false;
+            journeyStateText.textContent = "Unlocked - Editing";
+            journeySaveButton.innerHTML = '<i class="fa-solid fa-lock"></i> Lock In Changes';
+            enableJourneyDetailInputs(true);
+        } else {
+            // Currently unlocked, so lock it (and save)
+            handleSaveChanges(); 
+            isJourneyLocked = true;
+            journeyStateText.textContent = "Journey Locked";
+            journeySaveButton.innerHTML = '<i class="fa-solid fa-lock"></i> Unlock';
+            enableJourneyDetailInputs(false);
+        }
+    }
+
+    // [ADDED CODE] helper to disable/enable all form controls 
+    function enableJourneyDetailInputs(enable) {
+        const detailView = document.getElementById('journey-detail-view');
+        const allControls = detailView.querySelectorAll('input, select, textarea, button');
+        allControls.forEach(el => {
+            // Let the "Lock/Unlock" button itself remain clickable
+            if (el === journeySaveButton) return; 
+            el.disabled = !enable;
+        });
     }
 
     function renderJourneyStatus(journey) {
@@ -893,7 +912,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div style="display: flex; align-items: flex-start; flex-grow: 1;">
                         <span class="custom-checkbox ${task.completed ? 'checked' : ''}" data-task-index="${originalTaskIndex}" style="margin-top: 2px;"></span>
                         <div class="item-info" style="margin-left: 5px;">
-                            <div class="item-title" style="${task.completed ? 'text-decoration: line-through; color: #888;' : ''}">${task.description || 'Untitled Task'}</div>
+                            <div class="item-title" style="${task.completed ? 'text-decoration: line-through; color: #888;' : ''}">
+                                ${task.description || 'Untitled Task'}
+                            </div>
                             <div class="item-meta">
                                 <span class="meta-text">Assigned: ${assigneeName} ${dueDateFormatted}</span>
                                 ${labelsFormatted}
@@ -1036,7 +1057,6 @@ document.addEventListener('DOMContentLoaded', function() {
         contractsListTbody.querySelectorAll('.delete-contract-btn').forEach(btn => {
             btn.addEventListener('click', () => handleDeleteContractClick(btn.dataset.id));
         });
-        // Settings fields
         if (milestonesEl) milestonesEl.value = (db.settings.defaultMilestones || []).join(', ');
         if (rolesEl) rolesEl.value = (db.settings.defaultRoles || []).join(', ');
         renderTemplates();
@@ -1052,7 +1072,7 @@ document.addEventListener('DOMContentLoaded', function() {
         db.fileBox.forEach(item => {
             const div = document.createElement('div');
             div.className = 'document-item';
-            div.draggable = true; // Let user drag from here if they want
+            div.draggable = true; 
             div.dataset.fileboxId = item.id;
             div.addEventListener('dragstart', handleFileBoxDragStart);
             div.innerHTML = `
@@ -1065,13 +1085,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 </div>
             `;
-            // Clicking will edit
             div.addEventListener('click', () => handleEditFileBoxClick(item.id));
             fileboxList.appendChild(div);
         });
     }
 
-    // The portion of file box inside journey detail bottom
     function renderJourneyDetailFileBox() {
         const container = document.getElementById('journey-filebox-container');
         if (!container) return;
@@ -1104,17 +1122,13 @@ document.addEventListener('DOMContentLoaded', function() {
     function handleFileBoxDragStart(e) {
         const fileboxId = e.currentTarget.dataset.fileboxId;
         e.dataTransfer.setData('text/plain', fileboxId);
-        // We can set some drag image if we want
     }
-
-    // Called when user drops onto the Documents area
     window.handleFileBoxDrop = function(event) {
         event.preventDefault();
         const fileboxId = event.dataTransfer.getData('text/plain');
         if (!fileboxId || !activeJourneyId) return;
         const item = db.fileBox.find(x => x.id === fileboxId);
         if (!item) return;
-        // Create a new journey document from this item
         const newDoc = {
             id: generateId('d'),
             name: item.name,
@@ -1131,12 +1145,10 @@ document.addEventListener('DOMContentLoaded', function() {
         applyFiltersAndRerender();
     };
 
-    // Settings - templates
     function renderTemplates() {
         if (!templateEntriesContainer) return;
         templateEntriesContainer.innerHTML = '';
         db.settings.templates.forEach((tmpl, idx) => {
-            // tmpl = { id, name, type, content }
             const div = document.createElement('div');
             div.className = 'mb-2';
             div.innerHTML = `
@@ -1155,17 +1167,13 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
             templateEntriesContainer.appendChild(div);
         });
-        // Event handlers for removing
         templateEntriesContainer.querySelectorAll('.remove-template-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const i = parseInt(e.currentTarget.dataset.index);
-                if (!isNaN(i)) {
-                    db.settings.templates.splice(i, 1);
-                    renderTemplates();
-                }
+                db.settings.templates.splice(i, 1);
+                renderTemplates();
             });
         });
-        // Save changes on blur
         templateEntriesContainer.querySelectorAll('.template-name').forEach(inp => {
             inp.addEventListener('blur', (e) => {
                 const i = parseInt(e.target.dataset.idx);
@@ -1186,8 +1194,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // --- EVENT HANDLERS ---
-
     // Nav
     navItems.journeys.addEventListener('click', () => showView('journey-overview'));
     navItems.people.addEventListener('click', () => { renderPeople(); showView('people'); });
@@ -1195,7 +1201,6 @@ document.addEventListener('DOMContentLoaded', function() {
     navItems.filebox.addEventListener('click', () => { renderFileBox(); showView('filebox'); });
     navItems.settings.addEventListener('click', () => { renderContracts(); showView('settings'); });
 
-    // Settings
     if (milestonesEl) {
         milestonesEl.addEventListener('change', () => {
             db.settings.defaultMilestones = milestonesEl.value.split(',').map(s => s.trim()).filter(Boolean);
@@ -1256,11 +1261,12 @@ document.addEventListener('DOMContentLoaded', function() {
             ],
             commentHistory: []
         };
+        // For a brand new journey, it's not locked:
+        isJourneyLocked = false;
         loadJourneyDetail(activeJourneyId);
         handleJourneyDetailsClick();
     }
 
-    // Journey Detail
     function handleSaveChanges() {
         if (!activeJourneyId || !db.journeys[activeJourneyId]) return;
         const journey = db.journeys[activeJourneyId];
@@ -1278,15 +1284,14 @@ document.addEventListener('DOMContentLoaded', function() {
             journey.customStatus = null;
             journey.status = selectedStatus;
         }
-        const actionText = isNewJourney ? `Saved new Journey '${journey.name}'` : `Saved changes to Journey '${journey.name}'`;
+        const actionText = isNewJourney ? 
+            `Saved new Journey '${journey.name}'` : 
+            `Saved changes to Journey '${journey.name}'`;
         logActivity(activeJourneyId, actionText);
-        alert("Changes Locked In (Simulated Save)");
+        alert("Changes have been saved and locked.");
         isNewJourney = false;
-        journeyStateText.textContent = "Adding to Journey";
-        journeyStateText.style.color = "red";
-        journeySaveButton.innerHTML = '<i class="fa-solid fa-lock"></i> Lock In Changes';
         renderJourneyOverview();
-        loadJourneyDetail(activeJourneyId);
+        // We do NOT reload the detail forcibly here; we just updated the DB
     }
 
     journeyStatusSelect.addEventListener('change', (e) => {
@@ -1490,7 +1495,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Participants
+    // [ADDED CODE] Toggle participants .editing
+    const toggleParticipantsEditBtn = document.getElementById('toggle-participants-edit-btn');
+    if (toggleParticipantsEditBtn) {
+        toggleParticipantsEditBtn.addEventListener('click', () => {
+            participantsList.classList.toggle('editing');
+        });
+    }
+
     function handleAddParticipantClick() {
         document.getElementById('participant-modal-title').textContent = "Add Participant";
         document.getElementById('edit-participant-index').value = "";
@@ -1608,7 +1620,6 @@ document.addEventListener('DOMContentLoaded', function() {
         hideModal(participantModal);
     });
 
-    // Documents
     function handleAddDocumentClick() {
         document.getElementById('document-modal-title').textContent = "Add Document";
         document.getElementById('edit-document-id').value = "";
@@ -1657,11 +1668,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 docObj.name = docName;
                 docObj.description = docDesc;
                 docObj.labels = labels;
-                if (fileInput.files.length > 0) {
-                    // Simulate new file
-                    // docObj.added = new Date().toISOString();
-                    // docObj.addedBy = currentUser.name;
-                }
+                // ignoring file upload simulation
                 logActivity(activeJourneyId, `Updated document: ${docName}`);
             }
         } else {
@@ -1694,7 +1701,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Tasks
     function handleAddTaskClick() {
         document.getElementById('task-modal-title').textContent = "Add Task / Checklist";
         document.getElementById('edit-task-id').value = "";
@@ -1710,7 +1716,6 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('task-labels').value = "";
         renderModalComments('task-comments-list', []);
         document.getElementById('task-new-comment').value = "";
-        // Populate "Load From Template"
         renderTaskTemplateSelect("");
         showModal(taskModal);
     }
@@ -1762,7 +1767,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!tmplId) return;
         const tmpl = db.settings.templates.find(t => t.id === tmplId);
         if (!tmpl) return;
-        // Apply the template
         const type = tmpl.type;
         document.querySelector(`input[name="task-type"][value="${type}"]`).checked = true;
         toggleTaskTypeFields(type);
@@ -1923,7 +1927,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // People
     function handleAddPersonClick() {
         document.getElementById('person-modal-title').textContent = "Add Person";
         document.getElementById('edit-person-id').value = "";
@@ -1990,7 +1993,6 @@ document.addEventListener('DOMContentLoaded', function() {
         hideModal(personModal);
     });
 
-    // Contracts
     function handleAddContractClick() {
         document.getElementById('contract-modal-title').textContent = "Add Contract";
         document.getElementById('edit-contract-id').value = "";
@@ -2069,16 +2071,16 @@ document.addEventListener('DOMContentLoaded', function() {
         hideModal(contractModal);
     });
 
-    // File Box
     function handleAddFileBoxClick() {
         document.getElementById('filebox-modal-title').textContent = "Add File";
         document.getElementById('edit-filebox-id').value = "";
         document.getElementById('filebox-name').value = "";
         document.getElementById('filebox-description').value = "";
+        // We'll ignore the fake file upload in code
         document.getElementById('filebox-labels').value = "";
         showModal(fileboxModal);
     }
-    addFileboxButton?.addEventListener('click', handleAddFileBoxClick);
+    if (addFileboxButton) addFileboxButton.addEventListener('click', handleAddFileBoxClick);
 
     function handleEditFileBoxClick(fileboxId) {
         const item = db.fileBox.find(x => x.id === fileboxId);
@@ -2124,7 +2126,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Generic modal closers
     document.querySelectorAll('[data-dismiss="modal"]').forEach(btn => {
         btn.addEventListener('click', () => hideModal(btn.closest('.modal-backdrop')));
     });
@@ -2136,7 +2137,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Tag Input
     function setupTagInput(containerId, initialTags = []) {
         const container = document.getElementById(containerId);
         if (!container) return;

@@ -89,26 +89,38 @@
                 <!-- TOP SECTION -->
                 <div id="journey-detail-top" style="flex: 3; overflow-y: auto; padding-right:10px;">
                     
-                    <div class="journey-detail-header">
-                        <h1 id="journey-detail-title" class="journey-detail-title">Journey Title</h1>
-                        <div class="journey-save-section">
-                            <div id="journey-state-text" class="status-text">Creating New Journey</div>
-                            <button id="journey-save-button" class="btn"><i class="fa-solid fa-check"></i> Save and Create</button>
-                        </div>
-                    </div>
+                    <!-- Single-row header for Journey Detail -->
+<div class="d-flex align-items-center justify-content-between mb-3" style="flex-wrap: wrap; gap: 15px;">
+    <!-- LEFT SIDE (Title, Status stuff, Journey Details button) -->
+    <div class="d-flex align-items-center" style="flex-wrap: wrap; gap: 10px;">
+        <h1 id="journey-detail-title" class="journey-detail-title" style="margin:0; font-size:20px;">Journey Title</h1>
 
-                    <div class="journey-status-section">
-                        <label for="journey-status-select">Status:</label>
-                        <select id="journey-status-select" class="form-control form-control-sm">
-                            <!-- Statuses loaded by JS -->
-                        </select>
-                        <input type="text" id="journey-status-custom" class="form-control form-control-sm hidden" placeholder="Enter custom status">
-                        <button id="journey-status-edit-toggle" class="btn btn-sm btn-outline-primary" title="Enter Custom Status"><i class="fa-solid fa-pencil"></i></button>
-                    </div>
+        <label for="journey-status-select" style="margin-left:20px;">Status:</label>
+        <select id="journey-status-select" class="form-control form-control-sm" style="width:auto;">
+            <!-- Statuses loaded by JS -->
+        </select>
+        <input type="text" id="journey-status-custom" class="form-control form-control-sm hidden" 
+               placeholder="Enter custom status" style="width:auto;">
 
-                    <button class="btn btn-sm btn-outline-primary mb-3" id="journey-details-button">
-                        <i class="fa-solid fa-info-circle"></i> Journey Details
-                    </button>
+        <button id="journey-status-edit-toggle" class="btn btn-sm btn-outline-primary" 
+                title="Enter Custom Status">
+            <i class="fa-solid fa-pencil"></i>
+        </button>
+
+        <button class="btn btn-sm btn-outline-primary" id="journey-details-button">
+            <i class="fa-solid fa-info-circle"></i> Journey Details
+        </button>
+    </div>
+
+    <!-- RIGHT SIDE (Lock/unlock text, Lock button) -->
+    <div class="d-flex align-items-center" style="gap:10px;">
+        <div id="journey-state-text" class="status-text">Creating New Journey</div>
+        <button id="journey-save-button" class="btn">
+            <i class="fa-solid fa-check"></i> Save and Create
+        </button>
+    </div>
+</div>
+
 
                     <div id="journey-phases-display" class="journey-phases">
                         <!-- Phases loaded by JS -->
@@ -145,12 +157,14 @@
                         <div class="journey-participants" style="flex:1">
                             <div class="participants-header">
                                 <h4>Participants</h4>
-                                <button class="btn btn-sm btn-outline-secondary" id="toggle-participants-edit-btn">
-                                    <i class="fa-solid fa-pen-to-square"></i> Edit
-                                </button>
-                                <button class="btn btn-sm btn-outline-primary" id="add-participant-btn">
-                                    <i class="fa-solid fa-plus"></i> Add Participant
-                                </button>
+                                <div class="edit-controls">
+                                    <button class="btn btn-sm btn-outline-secondary" id="toggle-participants-edit-btn">
+                                        <i class="fa-solid fa-pen-to-square"></i> Edit
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-primary" id="add-participant-btn">
+                                        <i class="fa-solid fa-plus"></i> Add Participant
+                                    </button>
+                                </div>
                             </div>
                             <div id="participants-list" class="participants-list">
                                 <!-- Participants loaded by JS -->
@@ -485,7 +499,12 @@
                             <label for="document-new-comment">Add Comment</label>
                             <textarea id="document-new-comment" class="form-control" rows="2" placeholder="Type your comment... Use @ to mention participants."></textarea>
                         </div>
-                        <button class="btn btn-sm btn-secondary w-100" id="add-document-comment-btn">Add Comment</button>
+                        <button class="btn btn-sm btn-secondary" 
+        id="add-document-comment-btn" 
+        style="max-width:400px; width:100%;">
+    Add Comment
+</button>
+
                     </div>
                 </div>
             </div>
@@ -579,7 +598,12 @@
                             <label for="task-new-comment">Add Comment</label>
                             <textarea id="task-new-comment" class="form-control" rows="2" placeholder="Type your comment... Use @ to mention participants."></textarea>
                         </div>
-                        <button class="btn btn-sm btn-secondary w-100" id="add-task-comment-btn">Add Comment</button>
+                        <button class="btn btn-sm btn-secondary"
+        id="add-task-comment-btn"
+        style="max-width: 400px; width: 100%;">
+  Add Comment
+</button>
+
                     </div>
                 </div>
             </div>
@@ -683,11 +707,18 @@
                     <label for="filebox-description">Description</label>
                     <textarea class="form-control" id="filebox-description" rows="2"></textarea>
                 </div>
+                <!-- Fake Upload Field -->
+                <div class="form-group">
+                    <label for="filebox-upload-fake">Attach File (Simulation)</label>
+                    <input type="file" class="form-control" id="filebox-upload-fake">
+                    <small class="text-muted">This is for simulation only, file won't be uploaded.</small>
+                </div>
                 <div class="form-group">
                     <label for="filebox-labels">Labels</label>
                     <input type="text" class="form-control" id="filebox-labels" placeholder="e.g., Plans, Reference, etc.">
                 </div>
             </div>
+            
             <div class="modal-footer">
                 <button class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                 <button class="btn" id="save-filebox-btn">Save File</button>

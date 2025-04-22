@@ -577,16 +577,19 @@ textarea.form-control {
 }
 .participants-header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
     margin-bottom: 15px;
     flex-wrap: wrap;
     gap: 10px;
 }
 .participants-header h4 {
-    font-size: 16px;
     margin: 0;
-    color: #495057;
+}
+
+.participants-header .edit-controls {
+    margin-left: auto;
+    display: flex;
+    gap: 10px;
 }
 .participants-list {
     display: flex;
