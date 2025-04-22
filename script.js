@@ -9,6 +9,8 @@ document.addEventListener('DOMContentLoaded', function() {
     let isJourneyLocked = false; // if it's an existing journey, we lock by default
     // Store a snapshot of the journey when it is unlocked so we can compare later
     let journeyOriginalSnapshot = null;
+    // Track activity log starting index when journey is unlocked so we can show new entries later
+    let journeyUnlockLogIndex = 0;
 
     // Default phases
     const defaultPhases = ["Scope", "Sent", "Response", "Review", "Job Walk", "Awarded", "Construction", "Closeout"];
@@ -679,10 +681,10 @@ document.addEventListener('DOMContentLoaded', function() {
         if (val === null || val === undefined) return '—';
         let str;
         if (typeof val === 'object') {
-            try {
-                str = JSON.stringify(val);
-            } catch {
-                str = String(val);
+            if (Array.isArray(val)) {
+                str = `${val.length} item${val.length !== 1 ? 's' : ''}`;
+            } else {
+                str = 'updated'; // generic placeholder for complex objects
             }
         } else {
             str = String(val);
@@ -713,25 +715,59 @@ document.addEventListener('DOMContentLoaded', function() {
         return changes;
     };
 
-    function showConfirmLockModal(changes) {
+    // Build modal content given an array either of activity‑log entries or diff objects.
+    function showConfirmLockModal(list) {
         confirmLockModalBody.innerHTML = '';
-        if (!changes || changes.length === 0) {
+
+        if (!list || list.length === 0) {
             const p = document.createElement('p');
             p.textContent = 'No changes detected since unlocking. Lock anyway?';
             confirmLockModalBody.appendChild(p);
-        } else {
+        } else if (list[0] && list[0].action) {
+            // We have activity‑log style entries already prepared
             const intro = document.createElement('p');
-            intro.textContent = 'The following changes will be locked in:';
+            intro.textContent = 'These updates will be recorded:';
             confirmLockModalBody.appendChild(intro);
-            const ul = document.createElement('ul');
-            changes.forEach(c => {
-                const li = document.createElement('li');
-                li.innerHTML = `<strong>${c.field}:</strong> <em>${c.before}</em> &rarr; <em>${c.after}</em>`;
-                ul.appendChild(li);
+
+            const feed = document.createElement('div');
+            feed.className = 'activity-feed';
+
+            list.forEach(entry => {
+                const item = document.createElement('div');
+                item.className = 'feed-item';
+                item.innerHTML = `
+                    <div class="feed-dot" style="background-color: var(--secondary-color);"></div>
+                    <div class="feed-content">
+                        <div class="feed-meta"><strong>${entry.user || currentUser.name}</strong> • just now</div>
+                        <div class="feed-text">${entry.action}</div>
+                    </div>`;
+                feed.appendChild(item);
             });
-            confirmLockModalBody.appendChild(ul);
+            confirmLockModalBody.appendChild(feed);
+        } else {
+            // Fallback to basic diff list (primitive summary)
+            const intro = document.createElement('p');
+            intro.textContent = 'Review your recent updates:';
+            confirmLockModalBody.appendChild(intro);
+
+            const feed = document.createElement('div');
+            feed.className = 'activity-feed';
+
+            list.forEach(c => {
+                const text = `Updated <strong>${c.field}</strong>`;
+                const item = document.createElement('div');
+                item.className = 'feed-item';
+                item.innerHTML = `
+                    <div class="feed-dot" style="background-color: var(--secondary-color);"></div>
+                    <div class="feed-content">
+                        <div class="feed-meta"><strong>${currentUser.name}</strong> • just now</div>
+                        <div class="feed-text">${text}</div>
+                    </div>`;
+                feed.appendChild(item);
+            });
+            confirmLockModalBody.appendChild(feed);
         }
-        // Show modal
+
         showModal(confirmLockModal);
     }
 
@@ -758,17 +794,19 @@ document.addEventListener('DOMContentLoaded', function() {
             journeyStateText.textContent = "Unlocked - Editing";
             journeySaveButton.innerHTML = '<i class="fa-solid fa-lock"></i> Lock In Changes';
             enableJourneyDetailInputs(true);
-            // Deep clone current journey for later diff
+            // Deep clone current journey for later diff and record current activity log length
             if (activeJourneyId && db.journeys[activeJourneyId]) {
                 journeyOriginalSnapshot = JSON.parse(JSON.stringify(db.journeys[activeJourneyId]));
+                journeyUnlockLogIndex = (db.journeys[activeJourneyId].activityLog || []).length;
             }
         } else {
             // Currently unlocked – attempt to lock; show confirmation dialog
-            let changes = [];
-            if (activeJourneyId && db.journeys[activeJourneyId] && journeyOriginalSnapshot) {
-                changes = getJourneyChanges(journeyOriginalSnapshot, db.journeys[activeJourneyId]);
+            let newEntries = [];
+            if (activeJourneyId && db.journeys[activeJourneyId]) {
+                const log = db.journeys[activeJourneyId].activityLog || [];
+                newEntries = log.slice(journeyUnlockLogIndex);
             }
-            showConfirmLockModal(changes);
+            showConfirmLockModal(newEntries);
         }
     }
 

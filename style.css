@@ -859,6 +859,38 @@ textarea.form-control {
 .modal-footer .btn {
     margin-left: 10px;
 }
+
+/* Change review table in "Lock In Changes" modal */
+.changes-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    margin-top: 5px;
+    margin-bottom: 10px;
+}
+.changes-table th {
+    background-color: #f2f2f2;
+    text-align: left;
+    padding: 6px 8px;
+    font-weight: 600;
+    font-size: 13px;
+    color: #444;
+    border-bottom: 1px solid #ddd;
+}
+.changes-table td {
+    padding: 6px 8px;
+    vertical-align: top;
+    border-bottom: 1px solid #eee;
+    word-break: break-word;
+}
+.changes-table td.before {
+    color: #ae3d3d;
+    text-decoration: line-through;
+}
+.changes-table td.after {
+    color: var(--secondary-color);
+    font-weight: 500;
+}
 .checklist-item-input-group {
     display: flex;
     gap: 8px;
