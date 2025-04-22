@@ -175,6 +175,15 @@ textarea.form-control { min-height: 80px; }
 .participants-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;}
 .participants-header h4 { font-size: 16px; margin: 0; color: #495057; }
 .participants-list { display: flex; gap: 20px; flex-wrap: wrap; }
+/* Hide participant edit/remove buttons by default, show in editing mode */
+#participants-list .edit-participant-btn,
+#participants-list .remove-participant-btn {
+    display: none;
+}
+#participants-list.editing .edit-participant-btn,
+#participants-list.editing .remove-participant-btn {
+    display: inline-flex;
+}
 .participant-item { text-align: center; }
 .participant-icon {
     width: 50px; height: 50px; background-color: #e9ecef; border-radius: 50%; display: flex; align-items: center;

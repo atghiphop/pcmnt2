@@ -128,16 +128,32 @@
                 <!-- ## END LABEL FILTER ## -->
 
 
-                <div class="journey-participants">
-                    <div class="participants-header">
-                        <h4>Participants</h4>
-                        <button class="btn btn-sm btn-outline-primary" id="add-participant-btn">
-                            <i class="fa-solid fa-plus"></i> Add Participant
-                        </button>
+                <!-- Participants and Needs Attention Sections -->
+                <div style="display:flex; align-items:flex-start; gap:20px; margin-bottom:20px;">
+                    <!-- Participants Section -->
+                    <div class="journey-participants" style="flex:1">
+                        <div class="participants-header">
+                            <h4>Participants</h4>
+                            <button class="btn btn-sm btn-outline-secondary" id="toggle-participants-edit-btn">
+                                <i class="fa-solid fa-pen-to-square"></i> Edit
+                            </button>
+                            <button class="btn btn-sm btn-outline-primary" id="add-participant-btn">
+                                <i class="fa-solid fa-plus"></i> Add Participant
+                            </button>
+                        </div>
+                        <div id="participants-list" class="participants-list">
+                            <!-- Participants loaded by JS -->
+                            <p class="text-placeholder">No participants added yet.</p>
+                        </div>
                     </div>
-                    <div id="participants-list" class="participants-list">
-                        <!-- Participants loaded by JS -->
-                         <p class="text-placeholder">No participants added yet.</p>
+                    <!-- Needs Attention Section -->
+                    <div class="needs-attention journey-participants" style="flex:1">
+                        <div class="participants-header">
+                            <h4>Needs Attention</h4>
+                        </div>
+                        <div id="needs-attention-list" class="participants-list">
+                            <p class="text-placeholder">No items need attention.</p>
+                        </div>
                     </div>
                 </div>
 
@@ -250,6 +266,27 @@
                                 <tr><td colspan="5" class="text-placeholder">Loading contracts...</td></tr>
                             </tbody>
                         </table>
+                    </div>
+                </div>
+                <!-- Settings Section -->
+                <div class="card mb-3" id="settings-section">
+                    <div class="card-header">
+                        <span><i class="fa-solid fa-cog"></i> Settings</span>
+                    </div>
+                    <div class="card-content">
+                        <div class="form-group">
+                            <label for="default-milestones">Default Journey Milestones</label>
+                            <textarea id="default-milestones" class="form-control" rows="3" placeholder="Enter comma-separated milestones"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="default-roles">Default Roles</label>
+                            <input type="text" id="default-roles" class="form-control" placeholder="Enter comma-separated roles">
+                        </div>
+                        <div class="form-group">
+                            <label>Task & Checklist Templates</label>
+                            <div id="template-entries"></div>
+                            <button class="btn btn-sm btn-secondary" id="add-template-btn"><i class="fa-solid fa-plus"></i> Add Template</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -439,10 +476,12 @@
                     <div class="col-md-7">
                         <div class="form-group">
                             <label>Type</label>
-                            <div>
-                                <input type="radio" name="task-type" id="type-single" value="task" checked> <label for="type-single" style="font-weight:normal; margin-right: 15px;">Single Task</label>
-                                <input type="radio" name="task-type" id="type-checklist" value="checklist"> <label for="type-checklist" style="font-weight:normal;">Checklist</label>
-                            </div>
+                        <div class="d-flex align-items-center" style="gap:15px;">
+                            <input type="radio" name="task-type" id="type-single" value="task" checked>
+                            <label for="type-single" style="font-weight:normal; margin:0;">Single Task</label>
+                            <input type="radio" name="task-type" id="type-checklist" value="checklist">
+                            <label for="type-checklist" style="font-weight:normal; margin:0;">Checklist</label>
+                        </div>
                         </div>
 
                         <div id="task-single-fields">

@@ -112,6 +112,17 @@ document.addEventListener('DOMContentLoaded', function() {
             "c3": { id: "c3", contractWith: "MechPro Inc.", summary: "HVAC Upgrade Contract", startDate: "2024-07-25", endDate: "2025-01-31", files: ["Signed Contract - HVAC.pdf"] } // Added for j2
         }
     };
+    // --- User Settings Store ---
+    // Initialize settings for default milestones, roles, and templates
+    if (!db.settings) {
+        db.settings = {
+            defaultMilestones: [...defaultPhases],
+            defaultRoles: [
+                'Contractor', 'Owner', 'Reviewer', 'Tenant', 'Stakeholder', 'Other'
+            ],
+            templates: []
+        };
+    }
 
     // --- DOM Element References ---
     const headerTitle = document.getElementById('header-title');
@@ -150,6 +161,21 @@ document.addEventListener('DOMContentLoaded', function() {
     const contractsListTbody = document.getElementById('contracts-list-tbody');
     const addPersonButton = document.getElementById('add-person-button');
     const addContractButton = document.getElementById('add-contract-button');
+    // Toggle Edit mode for participants list
+    const toggleParticipantsEditBtn = document.getElementById('toggle-participants-edit-btn');
+    let participantsEditMode = false;
+    if (toggleParticipantsEditBtn) {
+        toggleParticipantsEditBtn.addEventListener('click', () => {
+            participantsEditMode = !participantsEditMode;
+            if (participantsEditMode) {
+                participantsList.classList.add('editing');
+                toggleParticipantsEditBtn.innerHTML = '<i class="fa-solid fa-check"></i> Done';
+            } else {
+                participantsList.classList.remove('editing');
+                toggleParticipantsEditBtn.innerHTML = '<i class="fa-solid fa-pen-to-square"></i> Edit';
+            }
+        });
+    }
 
     // Modals
     const journeyDetailsModal = document.getElementById('journey-details-modal');
@@ -494,6 +520,10 @@ function applyFiltersAndRerender() {
     renderDocuments(journey.documents || []);
     renderTasks(journey.tasks || []);
     renderParticipants(journey.participants || []);
+    // Render Needs Attention section
+    if (typeof renderNeedsAttention === 'function') {
+        renderNeedsAttention(journey);
+    }
 }
 // --- END LABEL FILTER FUNCTIONS ---
 
@@ -647,6 +677,55 @@ const renderParticipants = (participants) => {
     });
      listElement.querySelectorAll('.remove-participant-btn').forEach(btn => {
         btn.addEventListener('click', (e) => handleRemoveParticipantClick(parseInt(e.currentTarget.dataset.originalIndex)));
+    });
+};
+
+// --- Render Needs Attention Section ---
+const renderNeedsAttention = (journey) => {
+    const listEl = document.getElementById('needs-attention-list');
+    if (!listEl) return;
+    listEl.innerHTML = '';
+    const items = [];
+    // Tasks assigned to current user and not completed
+    (journey.tasks || []).filter(t => t.assignee === currentUser.id && !t.completed)
+        .forEach(t => items.push({ type: 'task', id: t.id, title: t.description || t.title || 'Task' }));
+    // Tasks where current user is interested party
+    (journey.tasks || []).filter(t => (t.interested || []).includes(currentUser.id))
+        .forEach(t => items.push({ type: 'task', id: t.id, title: t.description || t.title || 'Task' }));
+    // Comments tagging current user
+    (journey.commentHistory || []).filter(c => c.text.includes('@' + currentUser.name))
+        .forEach(c => {
+            const ctx = c.context || {};
+            if (ctx.type === 'task') {
+                const t = (journey.tasks || []).find(x => x.id === ctx.id);
+                if (t) items.push({ type: 'task', id: t.id, title: t.description || t.title || 'Task' });
+            } else if (ctx.type === 'document') {
+                const d = (journey.documents || []).find(x => x.id === ctx.id);
+                if (d) items.push({ type: 'document', id: d.id, title: d.name });
+            }
+        });
+    // Deduplicate items
+    const unique = [];
+    items.forEach(i => {
+        if (!unique.some(u => u.type === i.type && u.id === i.id)) unique.push(i);
+    });
+    if (unique.length === 0) {
+        listEl.innerHTML = '<p class="text-placeholder">No items need attention.</p>';
+        return;
+    }
+    unique.forEach(item => {
+        const div = document.createElement('div');
+        div.className = item.type === 'task' ? 'task-item' : 'document-item';
+        div.innerHTML = `
+            <div class="item-icon"><i class="fa-solid ${item.type === 'task' ? 'fa-list-check' : 'fa-folder-open'}"></i></div>
+            <div class="item-info"><div class="item-title">${item.title}</div></div>
+        `;
+        div.style.cursor = 'pointer';
+        div.addEventListener('click', () => {
+            if (item.type === 'task') handleEditTaskClick(item.id);
+            else if (item.type === 'document') handleEditDocumentClick(item.id);
+        });
+        listEl.appendChild(div);
     });
 };
 
@@ -808,6 +887,17 @@ const renderCommentHistory = (comments) => {
                 <div class="feed-text">${comment.text.replace(/@(\w+[\s\w]*)/g, '<strong>@$1</strong>')} ${contextLink}</div>
             </div>
         `;
+        // Make comment entries clickable to navigate to context
+        if (comment.context && activeJourneyId && db.journeys[activeJourneyId]) {
+            div.style.cursor = 'pointer';
+            div.addEventListener('click', () => {
+                if (comment.context.type === 'task') {
+                    handleEditTaskClick(comment.context.id);
+                } else if (comment.context.type === 'document') {
+                    handleEditDocumentClick(comment.context.id);
+                }
+            });
+        }
         commentHistoryList.appendChild(div);
     });
 };
@@ -829,6 +919,30 @@ const renderActivityLog = (log) => {
                 <div class="feed-text">${entry.action}</div>
             </div>
         `;
+        // Make activity entries clickable when referencing a task or document
+        (function() {
+            const match = entry.action.match(/'(.*?)'/);
+            const name = match ? match[1] : null;
+            if (name && activeJourneyId && db.journeys[activeJourneyId]) {
+                const journey = db.journeys[activeJourneyId];
+                let type = null;
+                if (entry.action.toLowerCase().includes('task')) type = 'task';
+                else if (entry.action.toLowerCase().includes('document')) type = 'document';
+                if (type === 'task') {
+                    const task = (journey.tasks || []).find(t => (t.description || t.title) === name);
+                    if (task) {
+                        div.style.cursor = 'pointer';
+                        div.addEventListener('click', () => handleEditTaskClick(task.id));
+                    }
+                } else if (type === 'document') {
+                    const doc = (journey.documents || []).find(d => d.name === name);
+                    if (doc) {
+                        div.style.cursor = 'pointer';
+                        div.addEventListener('click', () => handleEditDocumentClick(doc.id));
+                    }
+                }
+            }
+        })();
         activityLogList.appendChild(div);
     });
 };
@@ -888,8 +1002,37 @@ const renderContracts = () => {
         contractsListTbody.appendChild(tr);
     });
      // Add listeners for edit/delete
-     contractsListTbody.querySelectorAll('.edit-contract-btn').forEach(btn => btn.addEventListener('click', (e) => handleEditContractClick(e.currentTarget.dataset.id)));
-     contractsListTbody.querySelectorAll('.delete-contract-btn').forEach(btn => btn.addEventListener('click', (e) => handleDeleteContractClick(e.currentTarget.dataset.id)));
+    contractsListTbody.querySelectorAll('.edit-contract-btn').forEach(btn => btn.addEventListener('click', (e) => handleEditContractClick(e.currentTarget.dataset.id)));
+    contractsListTbody.querySelectorAll('.delete-contract-btn').forEach(btn => btn.addEventListener('click', (e) => handleDeleteContractClick(e.currentTarget.dataset.id)));
+    // Populate Settings UI
+    const milestonesEl = document.getElementById('default-milestones');
+    if (milestonesEl) milestonesEl.value = (db.settings.defaultMilestones || []).join(', ');
+    const rolesEl = document.getElementById('default-roles');
+    if (rolesEl) rolesEl.value = (db.settings.defaultRoles || []).join(', ');
+    // Render Templates
+    const templatesContainer = document.getElementById('template-entries');
+    if (templatesContainer) {
+        templatesContainer.innerHTML = '';
+        (db.settings.templates || []).forEach((tmpl, idx) => {
+            const div = document.createElement('div');
+            div.className = 'd-flex align-items-center mb-2';
+            div.innerHTML = `
+                <input type="text" class="form-control form-control-sm template-input me-2" data-index="${idx}" value="${tmpl}" placeholder="Template">
+                <button class="btn btn-sm btn-outline-danger remove-template-btn" data-index="${idx}" title="Remove Template"><i class="fa-solid fa-trash"></i></button>
+            `;
+            templatesContainer.appendChild(div);
+        });
+        // Remove template handlers
+        templatesContainer.querySelectorAll('.remove-template-btn').forEach(btn => {
+            btn.addEventListener('click', e => {
+                const idx = parseInt(e.currentTarget.dataset.index);
+                if (!isNaN(idx)) {
+                    db.settings.templates.splice(idx, 1);
+                    renderContracts();
+                }
+            });
+        });
+    }
 };
 
 
@@ -899,6 +1042,20 @@ const renderContracts = () => {
 navItems.journeys.addEventListener('click', () => showView('journey-overview'));
 navItems.people.addEventListener('click', () => { renderPeople(); showView('people'); });
 navItems.contracts.addEventListener('click', () => { renderContracts(); showView('contracts'); });
+// Settings input handlers
+document.getElementById('default-milestones')?.addEventListener('change', (e) => {
+    db.settings.defaultMilestones = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
+});
+document.getElementById('default-roles')?.addEventListener('change', (e) => {
+    db.settings.defaultRoles = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
+});
+document.getElementById('add-template-btn')?.addEventListener('click', () => {
+    const tpl = prompt('Enter new task/checklist template:');
+    if (tpl && tpl.trim()) {
+        db.settings.templates.push(tpl.trim());
+        renderContracts();
+    }
+});
 
 // Journey Overview Actions
 // --- Updated handleNewJourneyClick for Clean Start ---
@@ -915,7 +1072,10 @@ const handleNewJourneyClick = () => {
          if (currentView === 'people') renderPeople(); // Update people view if active
     }
 
-    // Create a truly minimal journey object
+    // Create a truly minimal journey object, using default milestones from settings if available
+    const milestones = (db.settings && Array.isArray(db.settings.defaultMilestones) && db.settings.defaultMilestones.length > 0)
+        ? db.settings.defaultMilestones
+        : defaultPhases;
     db.journeys[activeJourneyId] = {
         id: activeJourneyId,
         name: "New Untitled Journey",
@@ -925,16 +1085,16 @@ const handleNewJourneyClick = () => {
         phaseIndex: 0,
         assignedTo: creatorId, // Assign to creator initially
         nextDeadline: null,
-        status: defaultPhases[0], // Initial status based on phase 0
+        status: milestones[0], // Initial status based on first milestone
         lastUpdate: now,
         updatedBy: creatorName,
         description: "", // Start empty
         customStatus: null,
-        phases: [...defaultPhases], // Copy default phases
+        phases: [...milestones], // Copy default or custom phases
         participants: [{ id: creatorId, name: creatorName, role: "Owner", labels: ["Creator"] }], // Add only creator
         documents: [],   // Start empty
         tasks: [],       // Start empty
-        activityLog: [{ time: now, user: creatorName, action: "Created Journey 'New Untitled Journey'", phase: defaultPhases[0] }], // Initial log entry
+        activityLog: [{ time: now, user: creatorName, action: `Created Journey 'New Untitled Journey'`, phase: milestones[0] }], // Initial log entry
         commentHistory: [] // Start empty
     };
 
@@ -968,6 +1128,11 @@ const handleSaveChanges = () => {
         journey.status = selectedStatus;
     }
 
+    // Confirm summary of changes before saving
+    const changesPreview = (journey.activityLog || []).map(e => `- ${timeAgo(e.time)}: ${e.action}`).join('\n');
+    if (!confirm(`The following changes will be saved:\n${changesPreview}\nProceed?`)) {
+        return; // Cancel save
+    }
     // In a real app, this would send all changed data to the backend.
     // Here, we just update the log and potentially switch view.
     const actionText = isNewJourney ? `Saved new Journey '${journey.name}'` : `Saved changes to Journey '${journey.name}'`;
@@ -1192,9 +1357,16 @@ document.getElementById('save-phases-btn').addEventListener('click', () => {
      if (journey.phaseIndex < currentPhaseList.length - 1) {
          journey.phaseIndex++;
          // Update status to match new phase name (default behavior)
-         journey.status = currentPhaseList[journey.phaseIndex];
-         journey.customStatus = null; // Clear custom status on phase advance
-         logActivity(activeJourneyId, `Advanced to phase: ${journey.status}`);
+        journey.status = currentPhaseList[journey.phaseIndex];
+        journey.customStatus = null; // Clear custom status on phase advance
+        // Log phase advancement
+        logActivity(activeJourneyId, `Advanced to phase: ${journey.status}`);
+        // Prompt for optional comment on phase transition
+        const phaseComment = prompt('Add comment for phase transition (optional):');
+        if (phaseComment && phaseComment.trim()) {
+            addComment(activeJourneyId, { type: 'journey' }, phaseComment.trim());
+            logActivity(activeJourneyId, `Comment on phase '${journey.status}': "${phaseComment.trim()}"`);
+        }
          renderJourneyPhases(currentPhaseList, journey.phaseIndex);
          renderJourneyStatus(journey); // Update status dropdown
          advancePhaseBtn.disabled = journey.phaseIndex >= currentPhaseList.length - 1;
