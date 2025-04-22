@@ -346,12 +346,12 @@ document.addEventListener('DOMContentLoaded', function() {
         // Log the activity
         logActivity(journeyId, `Added comment: "${text.substring(0, 50)}..."`);
 
-        // --- Explicitly re-render the main comment history feed IF the view is active ---
+        // Re-render the main comment history feed if we're still in this journey detail view
         if (activeJourneyId === journeyId && currentView === 'journey-detail') {
             console.log(`Rendering main comment history for ${journeyId}`);
-            renderCommentHistory(journey.commentHistory); // Pass the updated history array
+            renderCommentHistory(db.journeys[journeyId].commentHistory);
         } else {
-             console.log(`Comment added for ${journeyId}, but view not active. View: ${currentView}, Active Journey: ${activeJourneyId}`);
+            console.log(`Comment added for ${journeyId}, but view not active. View: ${currentView}, Active Journey: ${activeJourneyId}`);
         }
 
         return itemUpdated; // Indicate if the specific item's comment list was updated
@@ -541,14 +541,15 @@ const loadJourneyDetail = (journeyId) => {
     renderJourneyPhases(journey.phases || defaultPhases, journey.phaseIndex);
     advancePhaseBtn.disabled = journey.phaseIndex >= (journey.phases || defaultPhases).length - 1;
 
-    // Call applyFiltersAndRerender which handles rendering the lists with current (empty) filters
+    // Show the journey detail view (sets currentView) before rendering lists
+    showView('journey-detail');
+
+    // Apply current filters and render documents, tasks, and participants
     applyFiltersAndRerender();
 
-    // Render non-filtered lists
+    // Render comment history and activity log
     renderCommentHistory(journey.commentHistory || []);
     renderActivityLog(journey.activityLog || []);
-
-    showView('journey-detail');
 };
 
  const renderJourneyStatus = (journey) => {
