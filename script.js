@@ -981,15 +981,13 @@ document.addEventListener('DOMContentLoaded', function() {
         peopleListTbody.innerHTML = '';
         const peopleArray = Object.values(db.people);
         if (peopleArray.length === 0) {
-            peopleListTbody.innerHTML = `<tr><td colspan="6" class="text-placeholder">No people found. Click 'Add Person' to create one.</td></tr>`;
+            peopleListTbody.innerHTML = `<tr><td colspan="5" class="text-placeholder">No people found. Click 'Add Person' to create one.</td></tr>`;
             return;
         }
         peopleArray.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
         peopleArray.forEach(p => {
             const tr = document.createElement('tr');
-            const imgUrl = p.image ? p.image : 'https://via.placeholder.com/30/CCCCCC/808080?text=?';
             tr.innerHTML = `
-                <td><img src="${imgUrl}" alt="${p.name}" class="person-image"></td>
                 <td>${p.name || 'N/A'}</td>
                 <td>${p.title || 'N/A'}</td>
                 <td>${p.company || 'N/A'}</td>

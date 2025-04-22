@@ -87,7 +87,7 @@
             <div id="journey-detail-view" class="hidden" style="display: flex; flex-direction: column; height: 100%;">
                 
                 <!-- TOP SECTION -->
-                <div id="journey-detail-top" style="flex: 2; overflow-y: auto; padding-right:10px;">
+                <div id="journey-detail-top" style="flex: 3; overflow-y: auto; padding-right:10px;">
                     
                     <div class="journey-detail-header">
                         <h1 id="journey-detail-title" class="journey-detail-title">Journey Title</h1>
@@ -244,7 +244,6 @@
                         <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th></th>
                                     <th>Name</th>
                                     <th>Title</th>
                                     <th>Company</th>
@@ -254,7 +253,7 @@
                             </thead>
                             <tbody id="people-list-tbody">
                                 <!-- People loaded by JS -->
-                                <tr><td colspan="6" class="text-placeholder">Loading people...</td></tr>
+                                <tr><td colspan="5" class="text-placeholder">Loading people...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -288,12 +287,6 @@
             <!-- File Box View -->
             <div id="filebox-view" class="hidden">
                 <div class="card">
-                    <div class="card-header">
-                        <span><i class="fa-solid fa-box-archive"></i> File Box</span>
-                        <button class="btn btn-sm" id="add-filebox-button">
-                            <i class="fa-solid fa-plus"></i> Add File
-                        </button>
-                    </div>
                     <div class="card-content" id="filebox-list">
                         <!-- File box items rendered by script.js -->
                         <p class="text-placeholder">No files in the File Box yet.</p>
@@ -309,7 +302,7 @@
                     </div>
                     <div class="card-content">
                         <div class="form-group">
-                            <label for="default-milestones">Default Journey Milestones</label>
+                            <label for="default-milestones">Default Journey Phases</label>
                             <textarea id="default-milestones" class="form-control" rows="3" placeholder="Enter comma-separated milestones"></textarea>
                         </div>
                         <div class="form-group">
