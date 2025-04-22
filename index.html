@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>eConverge - Procurement (v5 - Clean Start)</title>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!-- Link to External CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Left Nav -->
+    <div class="left-nav">
+        <div class="logo">
+            <img src="https://images.squarespace-cdn.com/content/v1/67608cd79b306d0d155d1909/c8f86dd2-aa25-4eaf-9b5d-1706147c424e/econ-logo-smallE.png?format=1500w" alt="eConverge Logo">
+        </div>
+        <div class="search-box">
+            <input type="text" placeholder="Search...">
+        </div>
+        <div class="nav-tree">
+            <div class="nav-item parent">
+                <i class="fa-solid fa-briefcase"></i> Procurement
+            </div>
+            <div class="nav-item nav-child active" id="nav-journeys">
+                <i class="fa-solid fa-route"></i> Journeys
+            </div>
+            <div class="nav-item nav-child" id="nav-people">
+                <i class="fa-solid fa-users"></i> People
+            </div>
+            <div class="nav-item nav-child" id="nav-contracts">
+                <i class="fa-solid fa-file-contract"></i> Contracts
+            </div>
+            <!-- Add other top-level nav items here if needed -->
+        </div>
+    </div>
+
+    <!-- Main Workspace -->
+    <div class="main-workspace">
+        <div class="workspace-header">
+            <div id="header-title" class="header-title">Journey Overview</div>
+            <div class="header-actions">
+                <button class="btn" id="header-action-button">
+                    <i class="fa-solid fa-plus"></i> New Journey
+                </button>
+            </div>
+        </div>
+        <div class="workspace-content">
+
+            <!-- Journey Overview View -->
+            <div id="journey-overview-view" class="active">
+                <div class="card">
+                    <div class="card-content" style="padding: 0;">
+                        <table class="journey-overview-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Contractors</th>
+                                    <th>Location</th>
+                                    <th>Tenants</th>
+                                    <th>Current Phase</th>
+                                    <th>Assigned To</th>
+                                    <th>Next Deadline</th>
+                                    <th>Status</th>
+                                    <th>Last Update</th>
+                                    <th>Updated By</th>
+                                </tr>
+                            </thead>
+                            <tbody id="journey-list-tbody">
+                                <!-- Journeys will be loaded here by JS -->
+                                <tr><td colspan="10" class="text-placeholder">Loading journeys...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Journey Detail View -->
+            <div id="journey-detail-view" class="hidden">
+                <div class="journey-detail-header">
+                    <h1 id="journey-detail-title" class="journey-detail-title">Journey Title</h1>
+                    <div class="journey-save-section">
+                        <div id="journey-state-text" class="status-text">Creating New Journey</div>
+                        <button id="journey-save-button" class="btn"><i class="fa-solid fa-check"></i> Save and Create</button>
+                    </div>
+                </div>
+
+                <div class="journey-status-section">
+                    <label for="journey-status-select">Status:</label>
+                    <select id="journey-status-select" class="form-control form-control-sm">
+                        <!-- Statuses loaded by JS -->
+                    </select>
+                    <input type="text" id="journey-status-custom" class="form-control form-control-sm hidden" placeholder="Enter custom status">
+                    <button id="journey-status-edit-toggle" class="btn btn-sm btn-outline-primary" title="Enter Custom Status"><i class="fa-solid fa-pencil"></i></button>
+                </div>
+
+                <button class="btn btn-sm btn-outline-primary mb-3" id="journey-details-button">
+                    <i class="fa-solid fa-info-circle"></i> Journey Details
+                </button>
+
+                <div id="journey-phases-display" class="journey-phases">
+                    <!-- Phases loaded by JS -->
+                </div>
+
+                <div class="journey-phase-actions">
+                    <button class="btn btn-sm btn-secondary" id="edit-phases-btn">
+                        <i class="fa-solid fa-pen-to-square"></i> Add/Edit Phases
+                    </button>
+                    <button class="btn btn-sm" id="advance-phase-btn">
+                        <i class="fa-solid fa-forward-step"></i> Proceed to Next Phase
+                    </button>
+                </div>
+
+                <!-- ## START LABEL FILTER (Clickable Badges) ## -->
+                <div class="journey-labels-filter card mb-3">
+                     <div class="card-body p-2">
+                         <div class="d-flex justify-content-between align-items-center mb-1">
+                             <label class="form-label mb-0" style="font-size: 13px; font-weight: 500;"><i class="fa-solid fa-tags"></i> Filter by Labels:</label>
+                             <button id="clear-label-filters-btn" class="btn btn-sm btn-outline-secondary py-0 px-1" style="font-size: 10px; display: none;">Clear All</button>
+                         </div>
+                         <div id="available-labels-container" class="d-flex flex-wrap gap-1" style="min-height: 25px;">
+                             <!-- Available labels will be loaded here by JS -->
+                             <span class="text-muted" style="font-size: 12px;">No labels found in this journey.</span>
+                         </div>
+                         <small class="text-muted d-block mt-1" style="font-size: 11px;">Click labels to filter. Shows items matching ALL selected labels.</small>
+                     </div>
+                </div>
+                <!-- ## END LABEL FILTER ## -->
+
+
+                <div class="journey-participants">
+                    <div class="participants-header">
+                        <h4>Participants</h4>
+                        <button class="btn btn-sm btn-outline-primary" id="add-participant-btn">
+                            <i class="fa-solid fa-plus"></i> Add Participant
+                        </button>
+                    </div>
+                    <div id="participants-list" class="participants-list">
+                        <!-- Participants loaded by JS -->
+                         <p class="text-placeholder">No participants added yet.</p>
+                    </div>
+                </div>
+
+                <div class="journey-main-content">
+                    <div class="journey-section">
+                        <div class="card">
+                            <div class="card-header">
+                                <span><i class="fa-solid fa-folder-open"></i> Documents</span>
+                                <button class="btn btn-sm btn-outline-primary" id="add-document-btn">
+                                    <i class="fa-solid fa-plus"></i> Add Document
+                                </button>
+                            </div>
+                            <div class="card-content" id="documents-list">
+                                <!-- Documents loaded by JS -->
+                                 <p class="text-placeholder">No documents added yet.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="journey-section">
+                        <div class="card">
+                            <div class="card-header">
+                                <span><i class="fa-solid fa-list-check"></i> Tasks</span>
+                                <button class="btn btn-sm btn-outline-primary" id="add-task-btn">
+                                    <i class="fa-solid fa-plus"></i> Add Task/Checklist
+                                </button>
+                            </div>
+                            <div class="card-content" id="tasks-list">
+                                <!-- Tasks loaded by JS -->
+                                 <p class="text-placeholder">No tasks added yet.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="journey-section">
+                        <div class="card">
+                            <div class="card-header">
+                                <i class="fa-solid fa-comments"></i> Comment History
+                            </div>
+                            <div class="card-content activity-feed" id="comment-history-list">
+                                <!-- Comments loaded by JS -->
+                                 <p class="text-placeholder">No comments yet.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="journey-section">
+                        <div class="card">
+                            <div class="card-header">
+                                <i class="fa-solid fa-timeline"></i> Activity Log
+                            </div>
+                            <div class="card-content activity-feed" id="activity-log-list">
+                                <!-- Activity loaded by JS -->
+                                 <p class="text-placeholder">No activity yet.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- People View -->
+            <div id="people-view" class="hidden">
+                 <div class="card">
+                    <div class="card-header">
+                        <span>People Directory</span>
+                         <button class="btn btn-sm" id="add-person-button">
+                            <i class="fa-solid fa-plus"></i> Add Person
+                        </button>
+                    </div>
+                    <div class="card-content" style="padding: 0;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th>Name</th>
+                                    <th>Title</th>
+                                    <th>Company</th>
+                                    <th>Labels</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="people-list-tbody">
+                                <!-- People loaded by JS -->
+                                <tr><td colspan="6" class="text-placeholder">Loading people...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contracts View -->
+            <div id="contracts-view" class="hidden">
+                <div class="card">
+                    <div class="card-header">
+                        <span>Contracts Repository</span>
+                         <button class="btn btn-sm" id="add-contract-button">
+                            <i class="fa-solid fa-plus"></i> Add Contract
+                        </button>
+                    </div>
+                    <div class="card-content" style="padding: 0;">
+                         <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Contract With</th>
+                                    <th>Summary</th>
+                                    <th>Dates</th>
+                                    <th>Files</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="contracts-list-tbody">
+                                <!-- Contracts loaded by JS -->
+                                <tr><td colspan="5" class="text-placeholder">Loading contracts...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div> <!-- End workspace-content -->
+    </div> <!-- End main-workspace -->
+
+    <!-- MODALS -->
+
+    <!-- Journey Details Modal -->
+    <div class="modal-backdrop" id="journey-details-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">Journey Details</div>
+                <button class="modal-close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="modal-journey-name">Journey Name</label>
+                    <input type="text" class="form-control" id="modal-journey-name">
+                </div>
+                <div class="form-group">
+                    <label for="modal-journey-contractors">Contractors</label>
+                    <div id="modal-journey-contractors" class="tag-input-container">
+                        <input type="text" placeholder="Add contractor...">
+                    </div>
+                     <small class="text-muted">Press Enter or Tab to add a contractor.</small>
+                </div>
+                <div class="form-group">
+                    <label for="modal-journey-location">Location</label>
+                     <div id="modal-journey-location" class="tag-input-container">
+                        <input type="text" placeholder="Add location...">
+                    </div>
+                     <small class="text-muted">Press Enter or Tab to add a location.</small>
+                </div>
+                <div class="form-group">
+                    <label for="modal-journey-tenants">Tenants</label>
+                     <div id="modal-journey-tenants" class="tag-input-container">
+                        <input type="text" placeholder="Add tenant...">
+                    </div>
+                     <small class="text-muted">Press Enter or Tab to add a tenant.</small>
+                </div>
+                 <div class="form-group">
+                    <label for="modal-journey-description">Description</label>
+                    <textarea class="form-control" id="modal-journey-description" rows="3"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button class="btn" id="save-journey-details-btn">Save Details</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Phases Modal -->
+    <div class="modal-backdrop" id="edit-phases-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">Edit Journey Phases</div>
+                <button class="modal-close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <label>Current Phases (Order Matters)</label>
+                <ul class="list-group" id="modal-phases-list" style="margin-bottom: 15px;"></ul>
+                <div class="form-group">
+                    <label for="new-phase-name">Add New Phase</label>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" class="form-control" id="new-phase-name" placeholder="Enter phase name">
+                        <button class="btn btn-sm btn-secondary" id="add-new-phase-btn">
+                            <i class="fa-solid fa-plus"></i> Add
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button class="btn" id="save-phases-btn">Save Phases</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Participant Modal -->
+    <div class="modal-backdrop" id="participant-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title" id="participant-modal-title">Add Participant</div>
+                <button class="modal-close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                 <input type="hidden" id="edit-participant-index">
+                 <div class="form-group">
+                     <label for="participant-search">Search Existing People</label>
+                     <input type="text" id="participant-search" class="form-control" placeholder="Start typing name...">
+                     <div id="participant-picklist" class="list-group mt-2" style="max-height: 150px; overflow-y: auto; border: 1px solid #eee; display: none;"></div>
+                 </div>
+                 <hr>
+                 <p class="text-muted text-center">Or add new participant details:</p>
+                <div class="form-group">
+                    <label for="participant-name">Name</label>
+                    <input type="text" class="form-control" id="participant-name" placeholder="e.g., John Doe or ABC Company">
+                </div>
+                <div class="form-group">
+                    <label for="participant-role">Role</label>
+                    <select id="participant-role" class="form-control">
+                        <option value="Contractor">Contractor</option>
+                        <option value="Owner">Owner</option>
+                        <option value="Reviewer">Reviewer</option>
+                        <option value="Tenant">Tenant</option>
+                        <option value="Stakeholder">Stakeholder</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                 <div class="form-group">
+                    <label for="participant-labels">Labels</label>
+                    <input type="text" class="form-control" id="participant-labels" placeholder="e.g., Plumbing, Tier 1 (comma-separated)">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button class="btn" id="save-participant-btn">Save Participant</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Document Modal -->
+    <div class="modal-backdrop" id="document-modal">
+        <div class="modal modal-lg">
+            <div class="modal-header">
+                <div class="modal-title" id="document-modal-title">Add Document</div>
+                <button class="modal-close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                 <input type="hidden" id="edit-document-id">
+                 <div class="row">
+                     <div class="col-md-7">
+                        <div class="form-group">
+                            <label for="document-name">Document Name / Title</label>
+                            <input type="text" class="form-control" id="document-name" placeholder="e.g., RFP Package v1.pdf">
+                        </div>
+                        <div class="form-group">
+                            <label for="document-file">Attach File (Simulation)</label>
+                            <input type="file" class="form-control" id="document-file">
+                             <small class="text-muted">This is for simulation only, file won't be uploaded.</small>
+                        </div>
+                         <div class="form-group">
+                            <label for="document-labels">Labels</label>
+                            <input type="text" class="form-control" id="document-labels" placeholder="e.g., RFP, Legal, Critical (comma-separated)">
+                        </div>
+                        <div class="form-group">
+                            <label>Document Preview (Placeholder)</label>
+                            <div style="height: 150px; background-color: #e9ecef; border-radius: 4px; display: flex; align-items: center; justify-content: center; text-align: center; color: #6c757d;">
+                                <i class="fa-solid fa-file-lines fa-3x"></i><br> Document Preview Area
+                            </div>
+                        </div>
+                     </div>
+                     <div class="col-md-5">
+                         <h5>Comments</h5>
+                         <div id="document-comments-list" class="modal-comment-list">
+                             <!-- Comments loaded here -->
+                             <p class="text-placeholder">No comments yet.</p>
+                         </div>
+                         <div class="form-group">
+                             <label for="document-new-comment">Add Comment</label>
+                             <textarea id="document-new-comment" class="form-control" rows="3" placeholder="Type your comment... Use @ to mention participants."></textarea>
+                         </div>
+                         <button class="btn btn-sm btn-secondary w-100" id="add-document-comment-btn">Add Comment</button>
+                     </div>
+                 </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button class="btn" id="save-document-btn">Save Document</button>
+            </div>
+        </div>
+    </div>
+
+     <!-- Add/Edit Task Modal -->
+    <div class="modal-backdrop" id="task-modal">
+        <div class="modal modal-lg">
+            <div class="modal-header">
+                <div class="modal-title" id="task-modal-title">Add Task / Checklist</div>
+                <button class="modal-close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="edit-task-id">
+                <div class="row">
+                    <div class="col-md-7">
+                        <div class="form-group">
+                            <label>Type</label>
+                            <div>
+                                <input type="radio" name="task-type" id="type-single" value="task" checked> <label for="type-single" style="font-weight:normal; margin-right: 15px;">Single Task</label>
+                                <input type="radio" name="task-type" id="type-checklist" value="checklist"> <label for="type-checklist" style="font-weight:normal;">Checklist</label>
+                            </div>
+                        </div>
+
+                        <div id="task-single-fields">
+                            <div class="form-group">
+                                <label for="task-description">Task Description</label>
+                                <input type="text" class="form-control" id="task-description" placeholder="e.g., Review contractor proposal">
+                            </div>
+                        </div>
+
+                        <div id="task-checklist-fields" class="hidden">
+                            <div class="form-group">
+                                <label for="checklist-title">Checklist Title</label>
+                                <input type="text" class="form-control" id="checklist-title" placeholder="e.g., Pre-Award Checklist">
+                            </div>
+                            <div class="form-group">
+                                <label>Checklist Items</label>
+                                <div id="checklist-items-container">
+                                    <!-- Items added by JS -->
+                                </div>
+                                <button type="button" class="btn btn-sm btn-secondary mt-2" id="add-checklist-item-btn"><i class="fa-solid fa-plus"></i> Add Item</button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="task-assignee">Assign To (Journey Participant)</label>
+                            <select id="task-assignee" class="form-control">
+                                <!-- Options loaded by JS -->
+                                <option value="">-- Select Participant --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="task-interested">Interested Parties (Optional)</label>
+                            <select id="task-interested" class="form-control" multiple>
+                                <!-- Options loaded by JS -->
+                            </select>
+                             <small class="text-muted">Hold Ctrl/Cmd to select multiple.</small>
+                        </div>
+                         <div class="form-group">
+                            <label for="task-due-date">Due Date (Optional)</label>
+                            <input type="date" class="form-control" id="task-due-date">
+                        </div>
+                         <div class="form-group">
+                            <label for="task-labels">Labels</label>
+                            <input type="text" class="form-control" id="task-labels" placeholder="e.g., Urgent, Finance, Approval (comma-separated)">
+                        </div>
+                    </div>
+                     <div class="col-md-5">
+                         <h5>Comments</h5>
+                         <div id="task-comments-list" class="modal-comment-list">
+                             <!-- Comments loaded here -->
+                              <p class="text-placeholder">No comments yet.</p>
+                         </div>
+                         <div class="form-group">
+                             <label for="task-new-comment">Add Comment</label>
+                             <textarea id="task-new-comment" class="form-control" rows="3" placeholder="Type your comment... Use @ to mention participants."></textarea>
+                         </div>
+                         <button class="btn btn-sm btn-secondary w-100" id="add-task-comment-btn">Add Comment</button>
+                     </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button class="btn" id="save-task-btn">Save Task</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Person Modal -->
+    <div class="modal-backdrop" id="person-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title" id="person-modal-title">Add Person</div>
+                <button class="modal-close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="edit-person-id">
+                <div class="form-group">
+                    <label for="person-name">Name</label>
+                    <input type="text" class="form-control" id="person-name">
+                </div>
+                 <div class="form-group">
+                    <label for="person-title">Title</label>
+                    <input type="text" class="form-control" id="person-title">
+                </div>
+                 <div class="form-group">
+                    <label for="person-company">Company</label>
+                    <input type="text" class="form-control" id="person-company">
+                </div>
+                 <div class="form-group">
+                    <label for="person-image">Image URL</label>
+                    <input type="text" class="form-control" id="person-image" placeholder="https://example.com/image.jpg">
+                </div>
+                 <div class="form-group">
+                    <label for="person-labels">Labels</label>
+                    <input type="text" class="form-control" id="person-labels" placeholder="e.g., Executive, Key Contact (comma-separated)">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button class="btn" id="save-person-btn">Save Person</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Contract Modal -->
+    <div class="modal-backdrop" id="contract-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title" id="contract-modal-title">Add Contract</div>
+                <button class="modal-close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                 <input type="hidden" id="edit-contract-id">
+                 <div class="form-group">
+                    <label for="contract-with">Contract With</label>
+                    <input type="text" class="form-control" id="contract-with" placeholder="Company or Person Name">
+                </div>
+                 <div class="form-group">
+                    <label for="contract-summary">Summary</label>
+                    <textarea class="form-control" id="contract-summary" rows="3"></textarea>
+                </div>
+                 <div class="form-group">
+                    <label for="contract-start-date">Start Date</label>
+                    <input type="date" class="form-control" id="contract-start-date">
+                </div>
+                 <div class="form-group">
+                    <label for="contract-end-date">End Date</label>
+                    <input type="date" class="form-control" id="contract-end-date">
+                </div>
+                 <div class="form-group">
+                    <label for="contract-files">Attach Files (Simulation)</label>
+                    <input type="file" class="form-control" id="contract-files" multiple>
+                     <small class="text-muted">This is for simulation only, files won't be uploaded.</small>
+                     <ul id="contract-file-list" class="list-group mt-2"></ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button class="btn" id="save-contract-btn">Save Contract</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Link to External JavaScript -->
+    <script src="script.js"></script>
+</body>
+</html>
