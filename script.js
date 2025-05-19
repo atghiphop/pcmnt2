@@ -581,9 +581,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 context: { type: 'document', id: 'd1' }
             }
         ],
-        poNumber: "",
-        rating: null,
-        feedback: "",
         suitable: false
     };
 
@@ -629,10 +626,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const addDocumentBtn = document.getElementById('add-document-btn');
     const tasksList = document.getElementById('tasks-list');
     const addTaskBtn = document.getElementById('add-task-btn');
-    const poNumberInput = document.getElementById('po-number-input');
-    const feedbackRatingInput = document.getElementById('feedback-rating-input');
-    const feedbackCommentsInput = document.getElementById('feedback-comments-input');
-    const savePoFeedbackBtn = document.getElementById('save-po-feedback-btn');
     const commentHistoryList = document.getElementById('comment-history-list');
     const activityLogList = document.getElementById('activity-log-list');
 
@@ -853,9 +846,6 @@ document.addEventListener('DOMContentLoaded', function() {
         renderCommentHistory(j.commentHistory||[]);
         renderActivityLog(j.activityLog||[]);
         renderJourneyDetailFileBox();
-        poNumberInput.value = j.poNumber || '';
-        feedbackRatingInput.value = j.rating || '';
-        feedbackCommentsInput.value = j.feedback || '';
     }
     function enableJourneyDetailInputs(enable){
         const detailView = document.getElementById('journey-detail-view');
@@ -2120,15 +2110,6 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
 
-    savePoFeedbackBtn.onclick=()=>{
-        const j=db.journeys[activeJourneyId];
-        if(!j)return;
-        j.poNumber = poNumberInput.value.trim();
-        j.rating = feedbackRatingInput.value ? parseInt(feedbackRatingInput.value) : null;
-        j.feedback = feedbackCommentsInput.value.trim();
-        logActivity(activeJourneyId,'Updated PO/feedback');
-        renderJourneyOverview();
-    };
 
 
     // People
