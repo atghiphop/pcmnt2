@@ -32,6 +32,55 @@ document.addEventListener('DOMContentLoaded', function() {
         "CO-OP",
         "MEMBER"
     ];
+
+    // Descriptions of each phase outlining responsibilities
+    const phaseDescriptions = [
+        {
+            member: "Member identifies the project and quickly confirms Co-op procurement suitability.",
+            vendor: "",
+            coop: ""
+        },
+        {
+            member: "",
+            vendor: "Vendor creates a detailed scope and generates an accurate estimate directly within the platform.",
+            coop: ""
+        },
+        {
+            member: "",
+            vendor: "Vendor submits the proposal to Co-op for automated compliance review.",
+            coop: ""
+        },
+        {
+            member: "",
+            vendor: "Vendor provides compliant, ready-to-review proposal documents to the member via a streamlined digital toolkit.",
+            coop: ""
+        },
+        {
+            member: "Member submits a clear, compliant PO directly to Co-op contracts team for recording and validation.",
+            vendor: "",
+            coop: ""
+        },
+        {
+            member: "",
+            vendor: "Vendor launches project work and tracks all details, progress, and updates via the platform.",
+            coop: ""
+        },
+        {
+            member: "",
+            vendor: "Vendor uploads PO directly to the system if it wasn't initially submitted by the member, ensuring full compliance and recordkeeping.",
+            coop: ""
+        },
+        {
+            member: "",
+            vendor: "",
+            coop: "Co-op confirms purchase order compliance officially, ensuring transparency, accountability, and reduced risk."
+        },
+        {
+            member: "",
+            vendor: "Vendor invoices, pays administrative fees, and all parties access final project reports, performance insights, and member feedback.",
+            coop: ""
+        }
+    ];
     const defaultStatuses = ["Preparing", "Reviewing", "Waiting", "Complete"];
 
     // In-memory DB
@@ -560,6 +609,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const journeyStatusEditToggle = document.getElementById('journey-status-edit-toggle');
     const journeyDetailsButton = document.getElementById('journey-details-button');
     const journeyPhasesDisplay = document.getElementById('journey-phases-display');
+    const phaseDescMember = document.getElementById('phase-desc-member');
+    const phaseDescVendor = document.getElementById('phase-desc-vendor');
+    const phaseDescCoop = document.getElementById('phase-desc-coop');
     const editPhasesBtn = document.getElementById('edit-phases-btn');
     const advancePhaseBtn = document.getElementById('advance-phase-btn');
     const addParticipantBtn = document.getElementById('add-participant-btn');
@@ -880,6 +932,7 @@ document.addEventListener('DOMContentLoaded', function() {
         journeyPhasesDisplay.innerHTML='';
         if(!phases||!phases.length) {
             journeyPhasesDisplay.innerHTML='<p class="text-placeholder">No phases defined.</p>';
+            renderPhaseDescription(-1);
             return;
         }
         phases.forEach((ph,i)=>{
@@ -893,6 +946,14 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
             journeyPhasesDisplay.appendChild(d);
         });
+        renderPhaseDescription(activeIndex);
+    }
+
+    function renderPhaseDescription(idx){
+        const desc = idx>=0 ? (phaseDescriptions[idx] || {}) : {};
+        if(phaseDescMember) phaseDescMember.textContent = desc.member || 'N/A';
+        if(phaseDescVendor) phaseDescVendor.textContent = desc.vendor || 'N/A';
+        if(phaseDescCoop) phaseDescCoop.textContent = desc.coop || 'N/A';
     }
     function renderJourneyStatus(j) {
         journeyStatusSelect.innerHTML='';
