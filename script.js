@@ -509,7 +509,80 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             ]
         },
-        fileBox: []
+        fileBox: [
+            {
+                id: generateId('fb'),
+                name: "Estimate Lighting.pdf",
+                description: "Lighting upgrade estimate",
+                labels: ["Estimate"]
+            },
+            {
+                id: generateId('fb'),
+                name: "Estimate HVAC.pdf",
+                description: "HVAC system estimate",
+                labels: ["Estimate"]
+            },
+            {
+                id: generateId('fb'),
+                name: "Purchase Order.pdf",
+                description: "Purchase order for project",
+                labels: ["PO"]
+            },
+            {
+                id: generateId('fb'),
+                name: "Invoice May 2025.pdf",
+                description: "Vendor invoice",
+                labels: ["Invoice"]
+            },
+            {
+                id: generateId('fb'),
+                name: "Payment Proof.pdf",
+                description: "Proof of payment",
+                labels: ["Payment"]
+            },
+            {
+                id: generateId('fb'),
+                name: "Contract Agreement.pdf",
+                description: "Signed contract",
+                labels: ["Contract"]
+            },
+            {
+                id: generateId('fb'),
+                name: "Site Photo.jpg",
+                description: "Site photo",
+                labels: ["Image"]
+            },
+            {
+                id: generateId('fb'),
+                name: "Layout Diagram.png",
+                description: "Layout diagram",
+                labels: ["Image"]
+            },
+            {
+                id: generateId('fb'),
+                name: "estimate.txt",
+                description: "Placeholder for estimate",
+                labels: ["Estimate"]
+            },
+            {
+                id: generateId('fb'),
+                name: "PO.txt",
+                description: "Placeholder for purchase order",
+                labels: ["PO"]
+            },
+            {
+                id: generateId('fb'),
+                name: "contract.txt",
+                description: "Placeholder for contract",
+                labels: ["Contract"]
+            },
+            {
+                id: generateId('fb'),
+                name: "invoice.txt",
+                description: "Placeholder for invoice",
+                labels: ["Invoice"]
+            }
+        ]
     };
 
     // For demonstration, add an example journey:
