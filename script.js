@@ -380,11 +380,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 labels: ["Approved Vendor", "Landscaping"],
                 location: "San Diego",
                 image: ""
+            },
+            "coop1": {
+                id: "coop1",
+                name: "Example Co-op",
+                title: "Co-op Rep",
+                company: "Example Co-op",
+                labels: ["Co-op"],
+                location: "",
+                image: ""
             }
         },
         settings: {
             defaultMilestones: [...defaultPhases],
-            defaultRoles: ["Member", "Vendor", "Stakeholder", "Other"],
+            defaultRoles: ["Member", "Vendor", "Stakeholder", "Co-op", "Other"],
             templates: [
                 {
                     id: generateId('tmpl'),
@@ -471,6 +480,7 @@ document.addEventListener('DOMContentLoaded', function() {
         phases: [...defaultPhases],
         participants: [
             { id: "user0", name: "Demo Member", role: "Member", labels: ["Owner"] },
+            { id: "coop1", name: "Example Co-op", role: "Co-op", labels: ["Co-op"] },
             { id: "p2", name: "BrightLight Vendor", role: "Vendor", labels: ["Approved Vendor"] }
         ],
         documents: [
@@ -1047,7 +1057,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         ? [...db.settings.defaultMilestones] 
                         : [...defaultPhases],
             participants: [
-                { id: currentUser.id, name: currentUser.name, role:"Member", labels:["Creator"] }
+                { id: currentUser.id, name: currentUser.name, role:"Member", labels:["Creator"] },
+                { id: "coop1", name: "Example Co-op", role: "Co-op", labels: ["Co-op"] }
             ],
             documents: [],
             tasks: [],
