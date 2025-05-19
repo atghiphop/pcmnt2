@@ -65,6 +65,321 @@ document.addEventListener('DOMContentLoaded', function() {
                 labels: ["Stakeholder"],
                 location: "Miami",
                 image: ""
+            },
+            "p5": {
+                id: "p5",
+                name: "Lumina Lighting",
+                title: "Account Manager",
+                company: "Lumina Light Corp",
+                labels: ["Approved Vendor", "Lighting"],
+                location: "Chicago",
+                image: ""
+            },
+            "p6": {
+                id: "p6",
+                name: "CoolingExperts",
+                title: "Sales Manager",
+                company: "CoolingExperts LLC",
+                labels: ["Approved Vendor", "HVAC"],
+                location: "Houston",
+                image: ""
+            },
+            "p7": {
+                id: "p7",
+                name: "GreenPower Energy",
+                title: "Vendor Rep",
+                company: "GreenPower",
+                labels: ["Approved Vendor", "Energy"],
+                location: "San Francisco",
+                image: ""
+            },
+            "p8": {
+                id: "p8",
+                name: "StoneWorks",
+                title: "Vendor",
+                company: "StoneWorks Ltd.",
+                labels: ["Approved Vendor", "Materials"],
+                location: "Los Angeles",
+                image: ""
+            },
+            "p9": {
+                id: "p9",
+                name: "UrbanScape Landscaping",
+                title: "Vendor",
+                company: "UrbanScape",
+                labels: ["Approved Vendor", "Landscaping"],
+                location: "Phoenix",
+                image: ""
+            },
+            "p10": {
+                id: "p10",
+                name: "Sunrise Solar",
+                title: "Vendor",
+                company: "Sunrise Solar",
+                labels: ["Approved Vendor", "Energy"],
+                location: "Denver",
+                image: ""
+            },
+            "p11": {
+                id: "p11",
+                name: "Apex Builders",
+                title: "Vendor",
+                company: "Apex Builders",
+                labels: ["Approved Vendor", "Construction"],
+                location: "Seattle",
+                image: ""
+            },
+            "p12": {
+                id: "p12",
+                name: "EcoTherm Heating",
+                title: "Vendor",
+                company: "EcoTherm Heating",
+                labels: ["Approved Vendor", "HVAC"],
+                location: "Portland",
+                image: ""
+            },
+            "p13": {
+                id: "p13",
+                name: "Prime Electrical",
+                title: "Vendor",
+                company: "Prime Electrical",
+                labels: ["Approved Vendor", "Electrical"],
+                location: "Detroit",
+                image: ""
+            },
+            "p14": {
+                id: "p14",
+                name: "FreshAir Ventilation",
+                title: "Vendor",
+                company: "FreshAir Ventilation",
+                labels: ["Approved Vendor", "HVAC"],
+                location: "Boston",
+                image: ""
+            },
+            "p15": {
+                id: "p15",
+                name: "Skyline Roofing",
+                title: "Vendor",
+                company: "Skyline Roofing",
+                labels: ["Approved Vendor", "Roofing"],
+                location: "Atlanta",
+                image: ""
+            },
+            "p16": {
+                id: "p16",
+                name: "Rapid Plumbing",
+                title: "Vendor",
+                company: "Rapid Plumbing",
+                labels: ["Approved Vendor", "Plumbing"],
+                location: "Phoenix",
+                image: ""
+            },
+            "p17": {
+                id: "p17",
+                name: "ClearView Windows",
+                title: "Vendor",
+                company: "ClearView Windows",
+                labels: ["Approved Vendor", "Windows"],
+                location: "Denver",
+                image: ""
+            },
+            "p18": {
+                id: "p18",
+                name: "Oak Interiors",
+                title: "Vendor",
+                company: "Oak Interiors",
+                labels: ["Approved Vendor", "Interior"],
+                location: "San Diego",
+                image: ""
+            },
+            "p19": {
+                id: "p19",
+                name: "Guardian Security",
+                title: "Vendor",
+                company: "Guardian Security",
+                labels: ["Approved Vendor", "Security"],
+                location: "Philadelphia",
+                image: ""
+            },
+            "p20": {
+                id: "p20",
+                name: "Harmony Flooring",
+                title: "Vendor",
+                company: "Harmony Flooring",
+                labels: ["Approved Vendor", "Flooring"],
+                location: "Nashville",
+                image: ""
+            },
+            "p21": {
+                id: "p21",
+                name: "Urban Transport Solutions",
+                title: "Vendor",
+                company: "Urban Transport Solutions",
+                labels: ["Approved Vendor", "Logistics"],
+                location: "Baltimore",
+                image: ""
+            },
+            "p22": {
+                id: "p22",
+                name: "Sparkle Cleaning",
+                title: "Vendor",
+                company: "Sparkle Cleaning",
+                labels: ["Approved Vendor", "Cleaning"],
+                location: "Charlotte",
+                image: ""
+            },
+            "p23": {
+                id: "p23",
+                name: "BlueWater Plumbing",
+                title: "Vendor",
+                company: "BlueWater Plumbing",
+                labels: ["Approved Vendor", "Plumbing"],
+                location: "Orlando",
+                image: ""
+            },
+            "p24": {
+                id: "p24",
+                name: "Peak Performance HVAC",
+                title: "Vendor",
+                company: "Peak Performance HVAC",
+                labels: ["Approved Vendor", "HVAC"],
+                location: "Minneapolis",
+                image: ""
+            },
+            "p25": {
+                id: "p25",
+                name: "Metro Painting",
+                title: "Vendor",
+                company: "Metro Painting",
+                labels: ["Approved Vendor", "Painting"],
+                location: "Cleveland",
+                image: ""
+            },
+            "p26": {
+                id: "p26",
+                name: "BrightSignage",
+                title: "Vendor",
+                company: "BrightSignage",
+                labels: ["Approved Vendor", "Signage"],
+                location: "Las Vegas",
+                image: ""
+            },
+            "p27": {
+                id: "p27",
+                name: "TimberCraft Carpentry",
+                title: "Vendor",
+                company: "TimberCraft Carpentry",
+                labels: ["Approved Vendor", "Carpentry"],
+                location: "Louisville",
+                image: ""
+            },
+            "p28": {
+                id: "p28",
+                name: "StoneCraft Pavers",
+                title: "Vendor",
+                company: "StoneCraft Pavers",
+                labels: ["Approved Vendor", "Landscaping"],
+                location: "Tampa",
+                image: ""
+            },
+            "p29": {
+                id: "p29",
+                name: "Arctic Refrigeration",
+                title: "Vendor",
+                company: "Arctic Refrigeration",
+                labels: ["Approved Vendor", "HVAC"],
+                location: "Anchorage",
+                image: ""
+            },
+            "p30": {
+                id: "p30",
+                name: "HeatWave Heating",
+                title: "Vendor",
+                company: "HeatWave Heating",
+                labels: ["Approved Vendor", "HVAC"],
+                location: "Dallas",
+                image: ""
+            },
+            "p31": {
+                id: "p31",
+                name: "OceanAir Cooling",
+                title: "Vendor",
+                company: "OceanAir Cooling",
+                labels: ["Approved Vendor", "HVAC"],
+                location: "San Diego",
+                image: ""
+            },
+            "p32": {
+                id: "p32",
+                name: "SolarSecure",
+                title: "Vendor",
+                company: "SolarSecure",
+                labels: ["Approved Vendor", "Energy"],
+                location: "San Jose",
+                image: ""
+            },
+            "p33": {
+                id: "p33",
+                name: "GreenRoof Systems",
+                title: "Vendor",
+                company: "GreenRoof Systems",
+                labels: ["Approved Vendor", "Roofing"],
+                location: "Seattle",
+                image: ""
+            },
+            "p34": {
+                id: "p34",
+                name: "Urban Interiors",
+                title: "Vendor",
+                company: "Urban Interiors",
+                labels: ["Approved Vendor", "Interior"],
+                location: "Newark",
+                image: ""
+            },
+            "p35": {
+                id: "p35",
+                name: "Mega Construction",
+                title: "Vendor",
+                company: "Mega Construction",
+                labels: ["Approved Vendor", "Construction"],
+                location: "Austin",
+                image: ""
+            },
+            "p36": {
+                id: "p36",
+                name: "ClearSignal Telecom",
+                title: "Vendor",
+                company: "ClearSignal Telecom",
+                labels: ["Approved Vendor", "Telecom"],
+                location: "Raleigh",
+                image: ""
+            },
+            "p37": {
+                id: "p37",
+                name: "Precision Metal Works",
+                title: "Vendor",
+                company: "Precision Metal Works",
+                labels: ["Approved Vendor", "Metal Fabrication"],
+                location: "Pittsburgh",
+                image: ""
+            },
+            "p38": {
+                id: "p38",
+                name: "SafeLift Elevators",
+                title: "Vendor",
+                company: "SafeLift Elevators",
+                labels: ["Approved Vendor", "Elevators"],
+                location: "Chicago",
+                image: ""
+            },
+            "p39": {
+                id: "p39",
+                name: "Terrace Gardening",
+                title: "Vendor",
+                company: "Terrace Gardening",
+                labels: ["Approved Vendor", "Landscaping"],
+                location: "San Diego",
+                image: ""
             }
         },
         settings: {
