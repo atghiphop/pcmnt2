@@ -349,6 +349,10 @@ textarea.form-control {
   color: #6c757d;
   margin-bottom: 5px;
 }
+.assigned-party-text {
+  font-size: 12px;
+  color: #6c757d;
+}
 .journey-phases {
   display: flex;
   margin-bottom: 25px;

@@ -30,55 +30,55 @@ document.addEventListener('DOMContentLoaded', function() {
         "VENDOR",
         "VENDOR",
         "CO-OP",
-        "MEMBER"
+        "VENDOR"
     ];
 
     // Descriptions of each phase outlining responsibilities
     const phaseDescriptions = [
         {
-            member: "Member identifies the project and quickly confirms Co-op procurement suitability.",
-            vendor: "",
+            member: "Select desired vendors and send estimate requests using eConverge.",
+            vendor: "Await member request and confirm participation.",
             coop: ""
         },
         {
-            member: "",
-            vendor: "Vendor creates a detailed scope and generates an accurate estimate directly within the platform.",
+            member: "Review vendor's scope and estimate once provided.",
+            vendor: "Create detailed scope of work and accurate estimate using TruPriceData™.",
             coop: ""
         },
         {
-            member: "",
-            vendor: "Vendor submits the proposal to Co-op for automated compliance review.",
+            member: "Await vendor's compliance submission.",
+            vendor: "Submit proposal and estimate to the Co-op Compliance Center.",
+            coop: "Review submission for compliance."
+        },
+        {
+            member: "Review the Co-op approved proposal from the vendor.",
+            vendor: "Deliver approved proposal package digitally to the member.",
+            coop: "Provide compliance approval."
+        },
+        {
+            member: "Send the Purchase Order to the Co-op for confirmation and recordkeeping.",
+            vendor: "Await PO to begin work.",
+            coop: "Record and validate the member's PO."
+        },
+        {
+            member: "Monitor progress and milestones on the platform.",
+            vendor: "Begin work and track updates and milestones in eConverge.",
             coop: ""
         },
         {
-            member: "",
-            vendor: "Vendor provides compliant, ready-to-review proposal documents to the member via a streamlined digital toolkit.",
+            member: "Ensure the PO is uploaded if it was missed.",
+            vendor: "Upload the Purchase Order into the system when necessary.",
             coop: ""
         },
         {
-            member: "Member submits a clear, compliant PO directly to Co-op contracts team for recording and validation.",
-            vendor: "",
-            coop: ""
+            member: "Await official confirmation of compliance.",
+            vendor: "Provide any final details requested by Co-op.",
+            coop: "Confirm PO compliance and finalize records."
         },
         {
-            member: "",
-            vendor: "Vendor launches project work and tracks all details, progress, and updates via the platform.",
-            coop: ""
-        },
-        {
-            member: "",
-            vendor: "Vendor uploads PO directly to the system if it wasn't initially submitted by the member, ensuring full compliance and recordkeeping.",
-            coop: ""
-        },
-        {
-            member: "",
-            vendor: "",
-            coop: "Co-op confirms purchase order compliance officially, ensuring transparency, accountability, and reduced risk."
-        },
-        {
-            member: "",
-            vendor: "Vendor invoices, pays administrative fees, and all parties access final project reports, performance insights, and member feedback.",
-            coop: ""
+            member: "Pay vendor invoices and provide ratings and feedback.",
+            vendor: "Invoice the member and submit administrative fees; review performance insights.",
+            coop: "Track fee payment and feedback in the system."
         }
     ];
     const defaultStatuses = ["Preparing", "Reviewing", "Waiting", "Complete"];
@@ -612,6 +612,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Journey Detail
     const journeyDetailTitle = document.getElementById('journey-detail-title');
     const journeyStateText = document.getElementById('journey-state-text');
+    const journeyAssignedParty = document.getElementById('journey-assigned-party');
     const journeySaveButton = document.getElementById('journey-save-button');
     const journeyStatusSelect = document.getElementById('journey-status-select');
     const journeyStatusCustom = document.getElementById('journey-status-custom');
@@ -846,6 +847,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         activeFilterLabels = [];
         renderJourneyStatus(j);
+        renderJourneyAssignedParty(j);
         renderJourneyPhases(j.phases, j.phaseIndex);
         advancePhaseBtn.disabled = j.phaseIndex >= j.phases.length-1;
         showView('journey-detail');
@@ -1006,6 +1008,12 @@ document.addEventListener('DOMContentLoaded', function() {
             renderJourneyStatus(j);
         }
     };
+
+    function renderJourneyAssignedParty(j){
+        if(journeyAssignedParty){
+            journeyAssignedParty.textContent = `Waiting on: ${j.assignedParty || 'N/A'}`;
+        }
+    }
     journeyStatusEditToggle.onclick = () => {
         journeyStatusSelect.value='__custom__';
         journeyStatusCustom.classList.remove('hidden');
@@ -1455,6 +1463,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             renderJourneyPhases(j.phases, j.phaseIndex);
             renderJourneyStatus(j);
+            renderJourneyAssignedParty(j);
             advancePhaseBtn.disabled= j.phaseIndex>= j.phases.length-1;
             renderJourneyOverview();
         }
