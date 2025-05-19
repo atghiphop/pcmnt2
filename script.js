@@ -70,7 +70,71 @@ document.addEventListener('DOMContentLoaded', function() {
         settings: {
             defaultMilestones: [...defaultPhases],
             defaultRoles: ["Member", "Vendor", "Stakeholder", "Other"],
-            templates: []
+            templates: [
+                {
+                    id: generateId('tmpl'),
+                    phaseIndex: 0,
+                    name: "Verify project & select vendor",
+                    type: "task",
+                    content: "Verify project suitability in eConverge and choose an approved vendor"
+                },
+                {
+                    id: generateId('tmpl'),
+                    phaseIndex: 1,
+                    name: "Prepare Scope & Estimate",
+                    type: "task",
+                    content: "Use TruPriceData™ to prepare the scope of work and estimate"
+                },
+                {
+                    id: generateId('tmpl'),
+                    phaseIndex: 2,
+                    name: "Compliance Submission Checklist",
+                    type: "checklist",
+                    content: "Upload proposal\nConfirm estimate details\nSubmit to Co-op"
+                },
+                {
+                    id: generateId('tmpl'),
+                    phaseIndex: 3,
+                    name: "Deliver approved proposal",
+                    type: "task",
+                    content: "Send the approved proposal package to the member"
+                },
+                {
+                    id: generateId('tmpl'),
+                    phaseIndex: 4,
+                    name: "Submit Purchase Order",
+                    type: "task",
+                    content: "Digitally send the Purchase Order to the Co-op"
+                },
+                {
+                    id: generateId('tmpl'),
+                    phaseIndex: 5,
+                    name: "Work tracking checklist",
+                    type: "checklist",
+                    content: "Start work\nPost progress updates\nConfirm milestones"
+                },
+                {
+                    id: generateId('tmpl'),
+                    phaseIndex: 6,
+                    name: "Upload missing PO",
+                    type: "task",
+                    content: "Ensure the Purchase Order is uploaded if it was missed"
+                },
+                {
+                    id: generateId('tmpl'),
+                    phaseIndex: 7,
+                    name: "Verify PO & compliance",
+                    type: "task",
+                    content: "Confirm PO and compliance requirements with the Co-op"
+                },
+                {
+                    id: generateId('tmpl'),
+                    phaseIndex: 8,
+                    name: "Billing & Feedback Checklist",
+                    type: "checklist",
+                    content: "Receive invoice\nMake payment\nProvide feedback and ratings"
+                }
+            ]
         },
         fileBox: []
     };
@@ -1571,7 +1635,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const select= document.getElementById('task-template-select');
         if(!select)return;
         select.innerHTML='<option value="">-- No Template --</option>';
+        const j=db.journeys[activeJourneyId];
+        const cur=j?j.phaseIndex:0;
         db.settings.templates.forEach(tmpl=>{
+            if(tmpl.phaseIndex!==undefined && tmpl.phaseIndex!==cur) return;
             const opt= document.createElement('option');
             opt.value=tmpl.id;
             opt.textContent=tmpl.name;
@@ -2011,6 +2078,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderTemplates(){
         if(!templateEntriesContainer)return;
         templateEntriesContainer.innerHTML='';
+        const phases = db.settings.defaultMilestones || defaultPhases;
         db.settings.templates.forEach((tm,i)=>{
             const dv= document.createElement('div');
             dv.className='mb-2';
@@ -2022,6 +2090,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 <select class="form-control form-control-sm template-type" data-idx="${i}" style="margin-bottom:6px;">
                   <option value="task" ${tm.type==='task'?'selected':''}>Single Task</option>
                   <option value="checklist" ${tm.type==='checklist'?'selected':''}>Checklist</option>
+                </select>
+                <label style="font-size:13px;">Phase</label>
+                <select class="form-control form-control-sm template-phase" data-idx="${i}" style="margin-bottom:6px;">
+                  ${phases.map((ph,pi)=>`<option value="${pi}" ${tm.phaseIndex===pi?'selected':''}>${ph}</option>`).join('')}
                 </select>
                 <label style="font-size:13px;">Content</label>
                 <textarea class="form-control form-control-sm template-content" rows="2" data-idx="${i}" style="margin-bottom:6px;">${tm.content}</textarea>
@@ -2051,6 +2123,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 db.settings.templates[i].type= e.target.value;
             };
         });
+        templateEntriesContainer.querySelectorAll('.template-phase').forEach(sel=>{
+            sel.onchange=e=>{
+                const i=parseInt(e.target.dataset.idx);
+                db.settings.templates[i].phaseIndex=parseInt(e.target.value);
+            };
+        });
         templateEntriesContainer.querySelectorAll('.template-content').forEach(txt=>{
             txt.onblur=e=>{
                 const i= parseInt(e.target.dataset.idx);
@@ -2064,6 +2142,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 id: generateId('tmpl'),
                 name:"New Template",
                 type:"task",
+                phaseIndex:0,
                 content:""
             };
             db.settings.templates.push(newT);
