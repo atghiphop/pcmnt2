@@ -430,6 +430,27 @@ textarea.form-control {
   flex-wrap: wrap;
 }
 
+/* description of the active phase */
+.phase-description {
+  background-color: #fff;
+  padding: 15px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  border: 1px solid #e9ecef;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  font-size: 14px;
+  line-height: 1.4;
+}
+.phase-description div {
+  margin-bottom: 4px;
+}
+.phase-description div:last-child {
+  margin-bottom: 0;
+}
+.phase-description strong {
+  font-weight: 600;
+}
+
 /* label filter */
 .journey-labels-filter {
   background-color: #fff;
