@@ -377,15 +377,23 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         activeJourneyId = jid;
-        isNewJourney = false;
         journeyDetailTitle.textContent = j.name;
 
-        // For existing journey, lock by default:
-        isJourneyLocked = true;
-        journeyStateText.textContent = "Journey Locked";
-        journeySaveButton.innerHTML = '<i class="fa-solid fa-lock"></i> Unlock';
+        // Default locking depends on whether this is a brand new journey
         journeySaveButton.onclick = handleJourneyLockToggle;
-        enableJourneyDetailInputs(false);
+        if(isNewJourney){
+            isJourneyLocked = false;
+            journeyStateText.textContent = "Unlocked - Editing";
+            journeySaveButton.innerHTML = '<i class="fa-solid fa-lock"></i> Lock In Changes';
+            enableJourneyDetailInputs(true);
+            journeyOriginalSnapshot = JSON.parse(JSON.stringify(j));
+            journeyUnlockLogIndex = j.activityLog.length;
+        } else {
+            isJourneyLocked = true;
+            journeyStateText.textContent = "Journey Locked";
+            journeySaveButton.innerHTML = '<i class="fa-solid fa-lock"></i> Unlock';
+            enableJourneyDetailInputs(false);
+        }
 
         activeFilterLabels = [];
         renderJourneyStatus(j);
