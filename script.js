@@ -875,6 +875,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         logActivity(activeJourneyId, `Selected vendors: ${newIds.join(", ")}`);
+        // Immediately update participant list and other filtered views
+        applyFiltersAndRerender();
         hideModal(vendorPickerModal);
         handleJourneyDetailsClick();
     };
