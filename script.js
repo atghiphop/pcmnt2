@@ -142,7 +142,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 phase: "Project Identification (Smart Onboarding)",
                 context: { type: 'document', id: 'd1' }
             }
-        ]
+        ],
+        estimates: [],
+        poNumber: "",
+        rating: null,
+        feedback: "",
+        suitable: false
     };
 
     // === DOM ELEMENTS ===
@@ -184,6 +189,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const addDocumentBtn = document.getElementById('add-document-btn');
     const tasksList = document.getElementById('tasks-list');
     const addTaskBtn = document.getElementById('add-task-btn');
+    const estimatesList = document.getElementById('estimates-list');
+    const addEstimateBtn = document.getElementById('add-estimate-btn');
+    const poNumberInput = document.getElementById('po-number-input');
+    const feedbackRatingInput = document.getElementById('feedback-rating-input');
+    const feedbackCommentsInput = document.getElementById('feedback-comments-input');
+    const savePoFeedbackBtn = document.getElementById('save-po-feedback-btn');
     const commentHistoryList = document.getElementById('comment-history-list');
     const activityLogList = document.getElementById('activity-log-list');
 
@@ -213,6 +224,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const participantModal = document.getElementById('participant-modal');
     const documentModal = document.getElementById('document-modal');
     const taskModal = document.getElementById('task-modal');
+    const estimateModal = document.getElementById('estimate-modal');
+    const estimateItemsContainer = document.getElementById('estimate-items-container');
+    const addEstimateItemBtn = document.getElementById('add-estimate-item-btn');
+    const estimateTotalInput = document.getElementById('estimate-total');
+    const editEstimateIdInput = document.getElementById('edit-estimate-id');
+    const saveEstimateBtn = document.getElementById('save-estimate-btn');
     const personModal = document.getElementById('person-modal');
     const fileboxModal = document.getElementById('filebox-modal');
     const confirmLockModal = document.getElementById('confirm-lock-modal');
@@ -396,6 +413,10 @@ document.addEventListener('DOMContentLoaded', function() {
         renderCommentHistory(j.commentHistory||[]);
         renderActivityLog(j.activityLog||[]);
         renderJourneyDetailFileBox();
+        poNumberInput.value = j.poNumber || '';
+        feedbackRatingInput.value = j.rating || '';
+        feedbackCommentsInput.value = j.feedback || '';
+        renderEstimates(j.estimates||[]);
     }
     function enableJourneyDetailInputs(enable){
         const detailView = document.getElementById('journey-detail-view');
@@ -460,6 +481,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const j = db.journeys[activeJourneyId];
         renderDocuments(j.documents||[]);
         renderTasks(j.tasks||[]);
+        renderEstimates(j.estimates||[]);
         renderParticipants(j.participants||[]);
         renderNeedsAttention(j);
         const labels = getAvailableLabelsForJourney(activeJourneyId);
@@ -777,6 +799,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('modal-journey-name').value = j.name||'';
         document.getElementById('modal-journey-description').value = j.description||'';
         setupTagInput('modal-journey-location', j.location||[]);
+        document.getElementById('modal-suitable-checkbox').checked = !!j.suitable;
 
         // Show chosen vendors as label-badges
         const selectedVendorsDisplay = document.getElementById('selected-vendors-display');
@@ -878,6 +901,7 @@ document.addEventListener('DOMContentLoaded', function() {
         j.name = document.getElementById('modal-journey-name').value.trim() || 'Untitled Journey';
         j.description = document.getElementById('modal-journey-description').value.trim();
         j.location = getTagsFromInput('modal-journey-location');
+        j.suitable = document.getElementById('modal-suitable-checkbox').checked;
 
         if(j.name!==oldName) {
             logActivity(activeJourneyId, `Journey name changed from "${oldName}" to "${j.name}"`);
@@ -1641,6 +1665,109 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         document.getElementById('task-new-comment').value='';
     };
+
+    // Estimates
+    addEstimateBtn.onclick = handleAddEstimateClick;
+    function renderEstimates(arr){
+        estimatesList.innerHTML='';
+        if(!arr||!arr.length){
+            estimatesList.innerHTML='<p class="text-placeholder">No estimates yet.</p>';
+            return;
+        }
+        arr.forEach(est=>{
+            const div=document.createElement('div');
+            div.className='estimate-item';
+            const total=computeEstimateTotal(est);
+            div.innerHTML=`
+              <div class="item-icon"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+              <div class="item-info">
+                <div class="item-title">Estimate ${est.id}</div>
+                <div class="item-meta"><span class="meta-text">Total: $${total.toFixed(2)}</span></div>
+              </div>`;
+            div.onclick=()=> handleEditEstimateClick(est.id);
+            estimatesList.appendChild(div);
+        });
+    }
+    function computeEstimateTotal(est){
+        return (est.items||[]).reduce((sum,it)=> sum + (parseFloat(it.qty)||0)*(parseFloat(it.price)||0),0);
+    }
+    function handleAddEstimateClick(){
+        document.getElementById('estimate-modal-title').textContent='Add Estimate';
+        editEstimateIdInput.value='';
+        estimateItemsContainer.innerHTML='';
+        addEstimateItemRow();
+        updateEstimateTotal();
+        showModal(estimateModal);
+    }
+    function handleEditEstimateClick(eid){
+        const j=db.journeys[activeJourneyId];
+        if(!j)return;
+        const est=j.estimates.find(e=>e.id===eid);
+        if(!est)return;
+        document.getElementById('estimate-modal-title').textContent='Edit Estimate';
+        editEstimateIdInput.value=est.id;
+        estimateItemsContainer.innerHTML='';
+        (est.items||[]).forEach(it=> addEstimateItemRow(it.desc,it.qty,it.price));
+        if(!(est.items||[]).length) addEstimateItemRow();
+        updateEstimateTotal();
+        showModal(estimateModal);
+    }
+    function addEstimateItemRow(desc='', qty=1, price=0){
+        const row=document.createElement('div');
+        row.className='d-flex gap-2 mb-1';
+        row.innerHTML=`
+           <input type="text" class="form-control form-control-sm est-desc" placeholder="Description" value="${desc}">
+           <input type="number" class="form-control form-control-sm est-qty" style="width:80px" value="${qty}">
+           <input type="number" class="form-control form-control-sm est-price" style="width:100px" value="${price}">
+           <button type="button" class="btn btn-sm btn-outline-danger remove-est-item-btn">&times;</button>`;
+        row.querySelector('.remove-est-item-btn').onclick=()=> row.remove();
+        estimateItemsContainer.appendChild(row);
+    }
+    function updateEstimateTotal(){
+        const rows=estimateItemsContainer.querySelectorAll('div');
+        let total=0;
+        rows.forEach(r=>{
+            const qty=parseFloat(r.querySelector('.est-qty').value)||0;
+            const price=parseFloat(r.querySelector('.est-price').value)||0;
+            total += qty*price;
+        });
+        estimateTotalInput.value='$'+total.toFixed(2);
+    }
+    estimateItemsContainer.addEventListener('input', updateEstimateTotal);
+    addEstimateItemBtn.onclick=()=>{ addEstimateItemRow(); updateEstimateTotal(); };
+    saveEstimateBtn.onclick=()=>{
+        const j=db.journeys[activeJourneyId];
+        if(!j)return;
+        const items=[];
+        estimateItemsContainer.querySelectorAll('div').forEach(row=>{
+            const desc=row.querySelector('.est-desc').value.trim();
+            const qty=parseFloat(row.querySelector('.est-qty').value)||0;
+            const price=parseFloat(row.querySelector('.est-price').value)||0;
+            if(desc) items.push({desc, qty, price});
+        });
+        const id=editEstimateIdInput.value;
+        if(id){
+            const idx=j.estimates.findIndex(e=>e.id===id);
+            if(idx>-1){ j.estimates[idx].items=items; }
+            logActivity(activeJourneyId,'Updated estimate');
+        } else {
+            j.estimates.push({id:generateId('e'), items});
+            logActivity(activeJourneyId,'Added estimate');
+        }
+        hideModal(estimateModal);
+        applyFiltersAndRerender();
+    };
+
+    savePoFeedbackBtn.onclick=()=>{
+        const j=db.journeys[activeJourneyId];
+        if(!j)return;
+        j.poNumber = poNumberInput.value.trim();
+        j.rating = feedbackRatingInput.value ? parseInt(feedbackRatingInput.value) : null;
+        j.feedback = feedbackCommentsInput.value.trim();
+        logActivity(activeJourneyId,'Updated PO/feedback');
+        renderJourneyOverview();
+    };
+
 
     // People
     function renderPeople(){

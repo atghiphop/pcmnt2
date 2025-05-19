@@ -532,7 +532,8 @@ textarea.form-control {
   font-size: 16px;
 }
 .document-item,
-.task-item {
+.task-item,
+.estimate-item {
   padding: 12px;
   border: 1px solid #eee;
   border-radius: 4px;
@@ -544,7 +545,8 @@ textarea.form-control {
   cursor: pointer;
 }
 .document-item:hover,
-.task-item:hover {
+.task-item:hover,
+.estimate-item:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 10px rgba(0,0,0,0.05);
 }
@@ -854,6 +856,9 @@ textarea.form-control {
 .mb-2 {
   margin-bottom:0.5rem !important;
 }
+.mb-1 {
+  margin-bottom:0.25rem !important;
+}
 .mt-2 {
   margin-top:0.5rem !important;
 }
@@ -871,4 +876,16 @@ textarea.form-control {
 }
 .align-items-center {
   align-items:center !important;
+}
+
+.estimate-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 10px;
+}
+.estimate-table th,
+.estimate-table td {
+  border: 1px solid #ddd;
+  padding: 4px 6px;
+  text-align: left;
 }
