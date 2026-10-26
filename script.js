@@ -1,4 +1,38 @@
 document.addEventListener('DOMContentLoaded', function() {
+    // Template values are text unless they were built by html().
+    class SafeHtml extends String {}
+
+    function escapeHtml(value) {
+        return String(value ?? '').replace(/[&<>"']/g, character => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        })[character]);
+    }
+
+    function renderHtmlValue(value) {
+        return value instanceof SafeHtml ? String(value) : escapeHtml(value);
+    }
+
+    function html(strings, ...values) {
+        return new SafeHtml(strings.reduce((result, part, index) =>
+            result + part + (index < values.length ? renderHtmlValue(values[index]) : ''), ''));
+    }
+
+    html.join = (values, separator = '') =>
+        new SafeHtml(values.map(renderHtmlValue).join(escapeHtml(separator)));
+
+    function formatMentions(value) {
+        const text = String(value ?? '');
+        const parts = [];
+        let offset = 0;
+        for (const match of text.matchAll(/@(\w+[\s\w]*)/g)) {
+            parts.push(text.slice(offset, match.index), html`<strong>${match[0]}</strong>`);
+            offset = match.index + match[0].length;
+        }
+        parts.push(text.slice(offset));
+        return html.join(parts);
+    }
+
+
     // === GLOBAL STATE ===
     let currentView = 'journey-overview';
     let activeJourneyId = null;
@@ -839,7 +873,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     function formatLabels(arr) {
         if(!arr||!arr.length) return '';
-        return arr.map(l=>`<span class="label-badge">${l}</span>`).join(' ');
+        return html.join(arr.map(l=>html`<span class="label-badge">${l}</span>`), ' ');
     }
     function generateId(prefix='') {
         return prefix + Date.now().toString(36) + Math.random().toString(36).substring(2,5);
@@ -850,7 +884,7 @@ document.addEventListener('DOMContentLoaded', function() {
         journeyListTbody.innerHTML = '';
         const jArr = Object.values(db.journeys);
         if(!jArr.length) {
-            journeyListTbody.innerHTML = `<tr><td colspan="9" class="text-placeholder">No journeys found. Click 'New Journey' to create one.</td></tr>`;
+            journeyListTbody.innerHTML = html`<tr><td colspan="9" class="text-placeholder">No journeys found. Click 'New Journey' to create one.</td></tr>`;
             return;
         }
         jArr.sort((a,b)=> new Date(b.lastUpdate||0) - new Date(a.lastUpdate||0));
@@ -869,7 +903,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
                 vendorNames = vendorList.join(", ");
             }
-            tr.innerHTML=`
+            tr.innerHTML=html`
                 <td>${j.name}</td>
                 <td>${vendorNames}</td>
                 <td>${(j.location||[]).join(', ')||'N/A'}</td>
@@ -946,7 +980,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const clearBtn = document.getElementById('clear-label-filters-btn');
         container.innerHTML = '';
         if(!labels.length) {
-            container.innerHTML = `<span class="text-muted" style="font-size:12px;">No labels found in this journey.</span>`;
+            container.innerHTML = html`<span class="text-muted" style="font-size:12px;">No labels found in this journey.</span>`;
             clearBtn.style.display='none';
             return;
         }
@@ -1004,7 +1038,7 @@ document.addEventListener('DOMContentLoaded', function() {
             d.className='phase';
             if(i<activeIndex) d.classList.add('completed');
             if(i===activeIndex) d.classList.add('active');
-            d.innerHTML=`
+            d.innerHTML=html`
               <div class="phase-dot"></div>
               <div class="phase-label">${ph}</div>
             `;
@@ -1132,7 +1166,7 @@ document.addEventListener('DOMContentLoaded', function() {
             list.forEach(entry => {
                 const item = document.createElement('div');
                 item.className='feed-item';
-                item.innerHTML=`
+                item.innerHTML=html`
                     <div class="feed-dot" style="background-color: var(--secondary-color);"></div>
                     <div class="feed-content">
                       <div class="feed-meta"><strong>${entry.user||currentUser.name}</strong> • just now</div>
@@ -1259,7 +1293,7 @@ document.addEventListener('DOMContentLoaded', function() {
         log.forEach(entry => {
             const div = document.createElement('div');
             div.className='feed-item';
-            div.innerHTML=`
+            div.innerHTML=html`
               <div class="feed-dot" style="background-color: var(--secondary-color);"></div>
               <div class="feed-content">
                 <div class="feed-meta">
@@ -1289,7 +1323,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const t = db.journeys[activeJourneyId].tasks.find(tt=>tt.id===c.context.id);
                 if(t) ctxText=`on task "${t.description||t.title}"`;
             }
-            div.innerHTML=`
+            div.innerHTML=html`
                 <div class="feed-dot"></div>
                 <div class="feed-content">
                   <div class="feed-meta">
@@ -1297,7 +1331,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <span class="feed-phase">(${c.phase})</span>
                   </div>
                   <div class="feed-text">
-                    ${c.text.replace(/@(\w+[\s\w]*)/g, '<strong>@$1</strong>')}
+                    ${formatMentions(c.text)}
                     <span class="text-muted" style="font-size:11px;"> ${ctxText}</span>
                   </div>
                 </div>
@@ -1367,12 +1401,12 @@ document.addEventListener('DOMContentLoaded', function() {
             vendors = vendors.filter(p => p.location?.toLowerCase().includes(l));
         }
         if(!vendors.length) {
-            vendorPickerTbody.innerHTML=`<tr><td colspan="5" class="text-placeholder">No vendors match your search.</td></tr>`;
+            vendorPickerTbody.innerHTML=html`<tr><td colspan="5" class="text-placeholder">No vendors match your search.</td></tr>`;
             return;
         }
         vendors.forEach(p=>{
             const tr = document.createElement('tr');
-            tr.innerHTML=`
+            tr.innerHTML=html`
               <td><input type="checkbox" class="vendor-select-chk" data-id="${p.id}"/></td>
               <td>${p.name}</td>
               <td>${p.company||'N/A'}</td>
@@ -1448,7 +1482,7 @@ document.addEventListener('DOMContentLoaded', function() {
         phases.forEach((ph,i)=>{
             const li = document.createElement('li');
             li.className='list-group-item';
-            li.innerHTML=`
+            li.innerHTML=html`
               <span>${ph}</span>
               <button class="btn btn-sm btn-outline-danger delete-phase-btn" data-index="${i}" title="Delete Phase">
                 <i class="fa-solid fa-trash-alt"></i>
@@ -1474,7 +1508,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const list = document.getElementById('modal-phases-list');
         const li = document.createElement('li');
         li.className='list-group-item';
-        li.innerHTML=`
+        li.innerHTML=html`
           <span>${val}</span>
           <button class="btn btn-sm btn-outline-danger delete-phase-btn" title="Delete Phase">
             <i class="fa-solid fa-trash-alt"></i>
@@ -1549,7 +1583,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         if(!filtered.length){
             const msg= fLabels.length?"No participants match the filter.":"No participants added yet.";
-            participantsList.innerHTML=`<p class="text-placeholder">${msg}</p>`;
+            participantsList.innerHTML=html`<p class="text-placeholder">${msg}</p>`;
             return;
         }
         filtered.forEach((p, i) =>{
@@ -1559,7 +1593,7 @@ document.addEventListener('DOMContentLoaded', function() {
             let icon='fa-user';
             if((p.role||'').toLowerCase().includes('vendor')) icon='fa-user-hard-hat';
             else if((p.role||'').toLowerCase().includes('member')) icon='fa-user-check';
-            div.innerHTML=`
+            div.innerHTML=html`
               <div class="participant-icon"><i class="fa-solid ${icon}"></i></div>
               <div class="participant-name">${p.name}</div>
               <div class="participant-role">${p.role}</div>
@@ -1644,7 +1678,7 @@ document.addEventListener('DOMContentLoaded', function() {
           .forEach(pp=>{
             const d = document.createElement('div');
             d.className='list-group-item list-group-item-action cursor-pointer';
-            d.innerHTML=`<strong>${pp.name}</strong> <small>(${pp.company||'N/A'})</small>`;
+            d.innerHTML=html`<strong>${pp.name}</strong> <small>(${pp.company||'N/A'})</small>`;
             d.onclick = ()=>{
                 document.getElementById('participant-name').value=pp.name;
                 document.getElementById('participant-name').dataset.selectedPersonId=pp.id;
@@ -1730,7 +1764,7 @@ document.addEventListener('DOMContentLoaded', function() {
         unique.forEach(it=>{
             const d = document.createElement('div');
             d.className=(it.type==='task'?'task-item':'document-item');
-            d.innerHTML=`
+            d.innerHTML=html`
               <div class="item-icon"><i class="fa-solid ${it.type==='task'?'fa-list-check':'fa-folder-open'}"></i></div>
               <div class="item-info">
                 <div class="item-title">${it.title}</div>
@@ -1757,7 +1791,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         if(!filtered.length){
             const msg = fl.length?"No documents match the filter.":"No documents added yet.";
-            documentsList.innerHTML=`<p class="text-placeholder">${msg}</p>`;
+            documentsList.innerHTML=html`<p class="text-placeholder">${msg}</p>`;
             return;
         }
         filtered.sort((a,b)=> new Date(b.added||0)- new Date(a.added||0));
@@ -1765,7 +1799,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const div = document.createElement('div');
             div.className='document-item';
             div.dataset.documentId= doc.id;
-            div.innerHTML=`
+            div.innerHTML=html`
               <div class="item-icon"><i class="fa-solid fa-file-lines"></i></div>
               <div class="item-info">
                 <div class="item-title">${doc.name}</div>
@@ -1865,13 +1899,13 @@ document.addEventListener('DOMContentLoaded', function() {
         sorted.forEach(c=>{
             const d= document.createElement('div');
             d.className='comment-item';
-            d.innerHTML=`
+            d.innerHTML=html`
               <div class="comment-meta">
                 <strong>${c.by||c.user}</strong>
                 <span class="time">${(new Date(c.time)).toLocaleString()}</span>
               </div>
               <div class="comment-text">
-                ${c.text.replace(/@(\w+[\s\w]*)/g, '<strong>@$1</strong>')}
+                ${formatMentions(c.text)}
               </div>
             `;
             cList.appendChild(d);
@@ -1892,7 +1926,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         if(!filtered.length){
             const msg= activeFilterLabels.length?"No tasks match the filter.":"No tasks added yet.";
-            tasksList.innerHTML=`<p class="text-placeholder">${msg}</p>`;
+            tasksList.innerHTML=html`<p class="text-placeholder">${msg}</p>`;
             return;
         }
         filtered.forEach((t,idx)=>{
@@ -1908,7 +1942,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const doneCount= (t.items||[]).filter(x=>x.completed).length;
                 const total= (t.items||[]).length;
                 const progress= total? `(${doneCount}/${total})`:"";
-                content=`
+                content=html`
                   <div class="item-icon"><i class="fa-solid fa-list-check"></i></div>
                   <div class="item-info">
                     <div class="item-title">${t.title||"Untitled Checklist"} ${progress}</div>
@@ -1916,16 +1950,16 @@ document.addEventListener('DOMContentLoaded', function() {
                       <span class="meta-text">Assigned: ${aname} ${dueInfo}</span>
                       ${labs}
                     </div>
-                    ${(t.items||[]).map((it,i2)=>`
+                    ${html.join((t.items||[]).map((it,i2)=>html`
                       <div class="checklist-item">
                         <span class="custom-checkbox ${it.completed?'checked':''}" data-task-index="${idx}" data-item-index="${i2}"></span>
                         <span style="${it.completed?'text-decoration: line-through; color:#888;':''}">${it.text}</span>
                       </div>
-                    `).join('')}
+                    `), '')}
                   </div>
                 `;
             } else {
-                content=`
+                content=html`
                   <div style="display: flex; align-items:flex-start; flex-grow:1;">
                     <span class="custom-checkbox ${t.completed?'checked':''}" data-task-index="${idx}" style="margin-top:2px;"></span>
                     <div class="item-info" style="margin-left:5px;">
@@ -2043,7 +2077,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const ctn= document.getElementById('checklist-items-container');
         const d= document.createElement('div');
         d.className='checklist-item-input-group';
-        d.innerHTML=`
+        d.innerHTML=html`
           <input type="text" class="form-control form-control-sm checklist-item-input" placeholder="Checklist item" value="${val}">
           <button type="button" class="btn btn-sm btn-outline-danger remove-checklist-item-btn" title="Remove Item">
             <i class="fa-solid fa-trash-alt"></i>
@@ -2199,13 +2233,13 @@ document.addEventListener('DOMContentLoaded', function() {
         peopleListTbody.innerHTML='';
         const arr= Object.values(db.people);
         if(!arr.length){
-            peopleListTbody.innerHTML=`<tr><td colspan="5" class="text-placeholder">No people found.</td></tr>`;
+            peopleListTbody.innerHTML=html`<tr><td colspan="5" class="text-placeholder">No people found.</td></tr>`;
             return;
         }
         arr.sort((a,b)=> (a.name||'').localeCompare(b.name||''));
         arr.forEach(p=>{
             const tr=document.createElement('tr');
-            tr.innerHTML=`
+            tr.innerHTML=html`
               <td>${p.name||'N/A'}</td>
               <td>${p.title||'N/A'}</td>
               <td>${p.company||'N/A'}</td>
@@ -2307,7 +2341,7 @@ document.addEventListener('DOMContentLoaded', function() {
             div.draggable=true;
             div.dataset.fileboxId=f.id;
             div.ondragstart= handleFileBoxDragStart;
-            div.innerHTML=`
+            div.innerHTML=html`
               <div class="item-icon"><i class="fa-solid fa-box-archive"></i></div>
               <div class="item-info">
                 <div class="item-title">${f.name}</div>
@@ -2334,7 +2368,7 @@ document.addEventListener('DOMContentLoaded', function() {
             div.draggable=true;
             div.dataset.fileboxId=f.id;
             div.ondragstart= handleFileBoxDragStart;
-            div.innerHTML=`
+            div.innerHTML=html`
               <div class="item-icon"><i class="fa-solid fa-box-archive"></i></div>
               <div class="item-info">
                 <div class="item-title">${f.name}</div>
@@ -2430,7 +2464,7 @@ document.addEventListener('DOMContentLoaded', function() {
         db.settings.templates.forEach((tm,i)=>{
             const dv= document.createElement('div');
             dv.className='mb-2';
-            dv.innerHTML=`
+            dv.innerHTML=html`
               <div style="border:1px solid #ddd; padding:10px; border-radius:4px; margin-bottom:5px;">
                 <label style="font-size:13px;">Template Name</label>
                 <input type="text" class="form-control form-control-sm template-name" data-idx="${i}" value="${tm.name}" style="margin-bottom:6px;">
@@ -2441,7 +2475,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </select>
                 <label style="font-size:13px;">Phase</label>
                 <select class="form-control form-control-sm template-phase" data-idx="${i}" style="margin-bottom:6px;">
-                  ${phases.map((ph,pi)=>`<option value="${pi}" ${tm.phaseIndex===pi?'selected':''}>${ph}</option>`).join('')}
+                  ${html.join(phases.map((ph,pi)=>html`<option value="${pi}" ${tm.phaseIndex===pi?'selected':''}>${ph}</option>`), '')}
                 </select>
                 <label style="font-size:13px;">Content</label>
                 <textarea class="form-control form-control-sm template-content" rows="2" data-idx="${i}" style="margin-bottom:6px;">${tm.content}</textarea>
