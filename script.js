@@ -1,4 +1,38 @@
 document.addEventListener('DOMContentLoaded', function() {
+    // Template values are text unless they were built by html().
+    class SafeHtml extends String {}
+
+    function escapeHtml(value) {
+        return String(value ?? '').replace(/[&<>"']/g, character => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        })[character]);
+    }
+
+    function renderHtmlValue(value) {
+        return value instanceof SafeHtml ? String(value) : escapeHtml(value);
+    }
+
+    function html(strings, ...values) {
+        return new SafeHtml(strings.reduce((result, part, index) =>
+            result + part + (index < values.length ? renderHtmlValue(values[index]) : ''), ''));
+    }
+
+    html.join = (values, separator = '') =>
+        new SafeHtml(values.map(renderHtmlValue).join(escapeHtml(separator)));
+
+    function formatMentions(value) {
+        const text = String(value ?? '');
+        const parts = [];
+        let offset = 0;
+        for (const match of text.matchAll(/@(\w+[\s\w]*)/g)) {
+            parts.push(text.slice(offset, match.index), html`<strong>${match[0]}</strong>`);
+            offset = match.index + match[0].length;
+        }
+        parts.push(text.slice(offset));
+        return html.join(parts);
+    }
+
+
     // --- Global State & Data ---
     let currentView = 'journey-overview'; // journey-overview, journey-detail, people, contracts, filebox, settings
     let activeJourneyId = null;
@@ -536,7 +570,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const formatLabels = (labelsArray) => {
         if (!labelsArray || labelsArray.length === 0) return '';
-        return labelsArray.map(l => `<span class="label-badge">${l}</span>`).join(' ');
+        return html.join(labelsArray.map(l => html`<span class="label-badge">${l}</span>`), ' ');
     };
 
     // --- RENDERING FUNCTIONS ---
@@ -545,7 +579,7 @@ document.addEventListener('DOMContentLoaded', function() {
         journeyListTbody.innerHTML = '';
         const journeys = Object.values(db.journeys);
         if (journeys.length === 0) {
-            journeyListTbody.innerHTML = `<tr><td colspan="10" class="text-placeholder">No journeys found. Click 'New Journey' to create one.</td></tr>`;
+            journeyListTbody.innerHTML = html`<tr><td colspan="10" class="text-placeholder">No journeys found. Click 'New Journey' to create one.</td></tr>`;
             return;
         }
         journeys.sort((a, b) => new Date(b.lastUpdate || 0) - new Date(a.lastUpdate || 0));
@@ -561,7 +595,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const contractors = (j.participants || []).filter(p => p.role === 'Contractor').map(p => p.name).join(', ') || 'N/A';
             const tenants = (j.participants || []).filter(p => p.role === 'Tenant').map(p => p.name).join(', ') || 'N/A';
 
-            tr.innerHTML = `
+            tr.innerHTML = html`
                 <td>${j.name || 'Unnamed Journey'}</td>
                 <td>${contractors}</td>
                 <td>${(j.location || []).join(', ') || 'N/A'}</td>
@@ -735,7 +769,7 @@ document.addEventListener('DOMContentLoaded', function() {
             list.forEach(entry => {
                 const item = document.createElement('div');
                 item.className = 'feed-item';
-                item.innerHTML = `
+                item.innerHTML = html`
                     <div class="feed-dot" style="background-color: var(--secondary-color);"></div>
                     <div class="feed-content">
                         <div class="feed-meta"><strong>${entry.user || currentUser.name}</strong> • just now</div>
@@ -754,10 +788,10 @@ document.addEventListener('DOMContentLoaded', function() {
             feed.className = 'activity-feed';
 
             list.forEach(c => {
-                const text = `Updated <strong>${c.field}</strong>`;
+                const text = html`Updated <strong>${c.field}</strong>`;
                 const item = document.createElement('div');
                 item.className = 'feed-item';
-                item.innerHTML = `
+                item.innerHTML = html`
                     <div class="feed-dot" style="background-color: var(--secondary-color);"></div>
                     <div class="feed-content">
                         <div class="feed-meta"><strong>${currentUser.name}</strong> • just now</div>
@@ -860,7 +894,7 @@ document.addEventListener('DOMContentLoaded', function() {
             phaseDiv.className = 'phase';
             if (i < activeIndex) phaseDiv.classList.add('completed');
             if (i === activeIndex) phaseDiv.classList.add('active');
-            phaseDiv.innerHTML = `
+            phaseDiv.innerHTML = html`
                 <div class="phase-dot"></div>
                 <div class="phase-label">${phaseName}</div>
             `;
@@ -878,7 +912,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         if (filtered.length === 0) {
             const message = filterLabels.length > 0 ? 'No participants match the current filter.' : 'No participants added yet.';
-            participantsList.innerHTML = `<p class="text-placeholder">${message}</p>`;
+            participantsList.innerHTML = html`<p class="text-placeholder">${message}</p>`;
             return;
         }
         filtered.forEach((p) => {
@@ -892,7 +926,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const div = document.createElement('div');
             div.className = 'participant-item';
-            div.innerHTML = `
+            div.innerHTML = html`
                 <div class="participant-icon"><i class="fa-solid ${iconClass}"></i></div>
                 <div class="participant-name">${name}</div>
                 <div class="participant-role">${role}</div>
@@ -943,7 +977,7 @@ document.addEventListener('DOMContentLoaded', function() {
         unique.forEach(item => {
             const div = document.createElement('div');
             div.className = item.type === 'task' ? 'task-item' : 'document-item';
-            div.innerHTML = `
+            div.innerHTML = html`
                 <div class="item-icon"><i class="fa-solid ${item.type === 'task' ? 'fa-list-check' : 'fa-folder-open'}"></i></div>
                 <div class="item-info"><div class="item-title">${item.title}</div></div>
             `;
@@ -966,7 +1000,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         if (filtered.length === 0) {
             const msg = filterLabels.length > 0 ? 'No documents match the current filter.' : 'No documents added yet.';
-            documentsList.innerHTML = `<p class="text-placeholder">${msg}</p>`;
+            documentsList.innerHTML = html`<p class="text-placeholder">${msg}</p>`;
             return;
         }
         filtered.sort((a, b) => new Date(b.added || 0) - new Date(a.added || 0));
@@ -974,7 +1008,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const div = document.createElement('div');
             div.className = 'document-item';
             div.dataset.documentId = doc.id;
-            div.innerHTML = `
+            div.innerHTML = html`
                 <div class="item-icon"><i class="fa-solid fa-file-lines"></i></div>
                 <div class="item-info">
                     <div class="item-title">${doc.name || 'Untitled Document'}</div>
@@ -999,7 +1033,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         if (filtered.length === 0) {
             const msg = filterLabels.length > 0 ? 'No tasks match the current filter.' : 'No tasks added yet.';
-            tasksList.innerHTML = `<p class="text-placeholder">${msg}</p>`;
+            tasksList.innerHTML = html`<p class="text-placeholder">${msg}</p>`;
             return;
         }
         filtered.forEach((task) => {
@@ -1016,7 +1050,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const completedItems = (task.items || []).filter(i => i.completed).length;
                 const totalItems = (task.items || []).length;
                 const progressText = totalItems > 0 ? `(${completedItems}/${totalItems})` : '';
-                content = `
+                content = html`
                     <div class="item-icon"><i class="fa-solid fa-list-check"></i></div>
                     <div class="item-info">
                         <div class="item-title">${task.title || 'Untitled Checklist'} ${progressText}</div>
@@ -1024,16 +1058,16 @@ document.addEventListener('DOMContentLoaded', function() {
                             <span class="meta-text">Assigned: ${assigneeName} ${dueDateFormatted}</span>
                             ${labelsFormatted}
                         </div>
-                        ${(task.items || []).map((item, idx) => `
+                        ${html.join((task.items || []).map((item, idx) => html`
                             <div class="checklist-item">
                                 <span class="custom-checkbox ${item.completed ? 'checked' : ''}" data-task-index="${originalTaskIndex}" data-item-index="${idx}"></span>
                                 <span style="${item.completed ? 'text-decoration: line-through; color: #888;' : ''}">${item.text}</span>
                             </div>
-                        `).join('')}
+                        `), '')}
                     </div>
                 `;
             } else {
-                content = `
+                content = html`
                     <div style="display: flex; align-items: flex-start; flex-grow: 1;">
                         <span class="custom-checkbox ${task.completed ? 'checked' : ''}" data-task-index="${originalTaskIndex}" style="margin-top: 2px;"></span>
                         <div class="item-info" style="margin-left: 5px;">
@@ -1080,12 +1114,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     contextText = 'on the journey';
                 }
             }
-            const contextLink = contextText ? `<span class="text-muted" style="font-size: 11px;"> ${contextText}</span>` : '';
-            div.innerHTML = `
+            const contextLink = contextText ? html`<span class="text-muted" style="font-size: 11px;"> ${contextText}</span>` : '';
+            div.innerHTML = html`
                 <div class="feed-dot"></div>
                 <div class="feed-content">
                     <div class="feed-meta"><strong>${comment.user}</strong> • ${timeAgo(comment.time)} <span class="feed-phase">(${comment.phase})</span></div>
-                    <div class="feed-text">${comment.text.replace(/@(\w+[\s\w]*)/g, '<strong>@$1</strong>')} ${contextLink}</div>
+                    <div class="feed-text">${formatMentions(comment.text)} ${contextLink}</div>
                 </div>
             `;
             if (comment.context && activeJourneyId) {
@@ -1111,7 +1145,7 @@ document.addEventListener('DOMContentLoaded', function() {
         log.forEach(entry => {
             const div = document.createElement('div');
             div.className = 'feed-item';
-            div.innerHTML = `
+            div.innerHTML = html`
                 <div class="feed-dot" style="background-color: var(--secondary-color);"></div>
                 <div class="feed-content">
                     <div class="feed-meta"><strong>${entry.user}</strong> • ${timeAgo(entry.time)} <span class="feed-phase">(${entry.phase})</span></div>
@@ -1127,13 +1161,13 @@ document.addEventListener('DOMContentLoaded', function() {
         peopleListTbody.innerHTML = '';
         const peopleArray = Object.values(db.people);
         if (peopleArray.length === 0) {
-            peopleListTbody.innerHTML = `<tr><td colspan="5" class="text-placeholder">No people found. Click 'Add Person' to create one.</td></tr>`;
+            peopleListTbody.innerHTML = html`<tr><td colspan="5" class="text-placeholder">No people found. Click 'Add Person' to create one.</td></tr>`;
             return;
         }
         peopleArray.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
         peopleArray.forEach(p => {
             const tr = document.createElement('tr');
-            tr.innerHTML = `
+            tr.innerHTML = html`
                 <td>${p.name || 'N/A'}</td>
                 <td>${p.title || 'N/A'}</td>
                 <td>${p.company || 'N/A'}</td>
@@ -1158,13 +1192,13 @@ document.addEventListener('DOMContentLoaded', function() {
         contractsListTbody.innerHTML = '';
         const contractsArray = Object.values(db.contracts);
         if (contractsArray.length === 0) {
-            contractsListTbody.innerHTML = `<tr><td colspan="5" class="text-placeholder">No contracts found. Click 'Add Contract' to create one.</td></tr>`;
+            contractsListTbody.innerHTML = html`<tr><td colspan="5" class="text-placeholder">No contracts found. Click 'Add Contract' to create one.</td></tr>`;
             return;
         }
         contractsArray.sort((a, b) => (a.contractWith || '').localeCompare(b.contractWith || ''));
         contractsArray.forEach(c => {
             const tr = document.createElement('tr');
-            tr.innerHTML = `
+            tr.innerHTML = html`
                 <td>${c.contractWith || 'N/A'}</td>
                 <td>${c.summary || 'N/A'}</td>
                 <td>${formatDate(c.startDate)} - ${c.endDate ? formatDate(c.endDate) : 'Ongoing'}</td>
@@ -1200,7 +1234,7 @@ document.addEventListener('DOMContentLoaded', function() {
             div.draggable = true; 
             div.dataset.fileboxId = item.id;
             div.addEventListener('dragstart', handleFileBoxDragStart);
-            div.innerHTML = `
+            div.innerHTML = html`
                 <div class="item-icon"><i class="fa-solid fa-box-archive"></i></div>
                 <div class="item-info">
                     <div class="item-title">${item.name || 'Unnamed File'}</div>
@@ -1230,7 +1264,7 @@ document.addEventListener('DOMContentLoaded', function() {
             div.draggable = true;
             div.dataset.fileboxId = item.id;
             div.addEventListener('dragstart', handleFileBoxDragStart);
-            div.innerHTML = `
+            div.innerHTML = html`
                 <div class="item-icon"><i class="fa-solid fa-box-archive"></i></div>
                 <div class="item-info">
                     <div class="item-title">${item.name || 'Unnamed File'}</div>
@@ -1276,7 +1310,7 @@ document.addEventListener('DOMContentLoaded', function() {
         db.settings.templates.forEach((tmpl, idx) => {
             const div = document.createElement('div');
             div.className = 'mb-2';
-            div.innerHTML = `
+            div.innerHTML = html`
                 <div style="border:1px solid #ddd; padding:10px; border-radius:4px; margin-bottom:5px;">
                     <label style="font-size:13px;">Template Name</label>
                     <input type="text" class="form-control form-control-sm template-name" data-idx="${idx}" value="${tmpl.name}" style="margin-bottom:6px;">
@@ -1536,7 +1570,7 @@ document.addEventListener('DOMContentLoaded', function() {
         phases.forEach((phaseName, index) => {
             const li = document.createElement('li');
             li.className = 'list-group-item';
-            li.innerHTML = `
+            li.innerHTML = html`
                 <span>${phaseName}</span>
                 <button class="btn btn-sm btn-outline-danger delete-phase-btn" data-index="${index}" title="Delete Phase">
                     <i class="fa-solid fa-trash-alt"></i>
@@ -1564,7 +1598,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const list = document.getElementById('modal-phases-list');
             const li = document.createElement('li');
             li.className = 'list-group-item';
-            li.innerHTML = `
+            li.innerHTML = html`
                 <span>${name}</span>
                 <button class="btn btn-sm btn-outline-danger delete-phase-btn" title="Delete Phase">
                     <i class="fa-solid fa-trash-alt"></i>
@@ -1685,7 +1719,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .forEach(p => {
                 const div = document.createElement('div');
                 div.className = 'list-group-item list-group-item-action cursor-pointer';
-                div.innerHTML = `<strong>${p.name}</strong> <small>(${p.company || 'N/A'})</small>`;
+                div.innerHTML = html`<strong>${p.name}</strong> <small>(${p.company || 'N/A'})</small>`;
                 div.onclick = () => {
                     document.getElementById('participant-name').value = p.name;
                     document.getElementById('participant-name').dataset.selectedPersonId = p.id;
@@ -1930,7 +1964,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const container = document.getElementById('checklist-items-container');
         const div = document.createElement('div');
         div.className = 'checklist-item-input-group';
-        div.innerHTML = `
+        div.innerHTML = html`
             <input type="text" class="form-control form-control-sm checklist-item-input" placeholder="Checklist item" value="${value}">
             <button type="button" class="btn btn-sm btn-outline-danger remove-checklist-item-btn" title="Remove Item"><i class="fa-solid fa-trash-alt"></i></button>
         `;
@@ -2339,9 +2373,9 @@ document.addEventListener('DOMContentLoaded', function() {
         sorted.forEach(c => {
             const div = document.createElement('div');
             div.className = 'comment-item';
-            div.innerHTML = `
+            div.innerHTML = html`
                 <div class="comment-meta"><strong>${c.by || c.user || 'Unknown'}</strong> <span class="time">${formatDateTime(c.time)}</span></div>
-                <div class="comment-text">${c.text.replace(/@(\w+[\s\w]*)/g, '<strong>@$1</strong>')}</div>
+                <div class="comment-text">${formatMentions(c.text)}</div>
             `;
             list.appendChild(div);
         });
